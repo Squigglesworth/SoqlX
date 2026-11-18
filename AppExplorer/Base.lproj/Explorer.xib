@@ -232,6 +232,7 @@
                                                                                         <binding destination="-3" name="font" keyPath="delegate.editFont" id="vAG-Jz-Xa6"/>
                                                                                         <outlet property="completionsPopover" destination="NbV-VM-bM2" id="ieC-UN-FFw"/>
                                                                                         <outlet property="completionsViewController" destination="2hq-n8-i7X" id="tbn-pu-uVV"/>
+                                                                                        <outlet property="docsText" destination="dcs-tx-fld" id="dcs-ou-tlt"/>
                                                                                         <outlet property="delegate" destination="218" id="952"/>
                                                                                         <outlet property="errorPopover" destination="HCg-Ob-fyM" id="n7L-wl-Kxv"/>
                                                                                         <outlet property="errorText" destination="bhc-Gn-gb7" id="P0T-q5-psF"/>
@@ -1168,14 +1169,14 @@ DQ
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <scrollView horizontalLineScroll="26" horizontalPageScroll="10" verticalLineScroll="26" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="RPR-qu-LgX">
-                    <rect key="frame" x="0.0" y="0.0" width="461" height="283"/>
+                    <rect key="frame" x="0.0" y="78" width="461" height="205"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" drawsBackground="NO" id="LsD-j1-HQO">
-                        <rect key="frame" x="1" y="1" width="444" height="281"/>
+                        <rect key="frame" x="1" y="1" width="444" height="203"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" rowHeight="24" rowSizeStyle="automatic" viewBased="YES" id="HZD-mi-Iyd">
-                                <rect key="frame" x="0.0" y="0.0" width="444" height="281"/>
+                                <rect key="frame" x="0.0" y="0.0" width="444" height="203"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="_sourceListBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -1232,10 +1233,23 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                     <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="edC-bg-1SP">
-                        <rect key="frame" x="445" y="1" width="15" height="281"/>
+                        <rect key="frame" x="445" y="1" width="15" height="203"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                 </scrollView>
+                <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="dcs-sp-lin" userLabel="DocsSeparator">
+                    <rect key="frame" x="0.0" y="73" width="461" height="5"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                </box>
+                <textField verticalHuggingPriority="750" fixedFrame="YES" allowsExpansionToolTips="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dcs-tx-fld" userLabel="CompletionDocs">
+                    <rect key="frame" x="10" y="6" width="441" height="64"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="wordWrapping" truncatesLastVisibleLine="YES" title="" id="dcs-tx-cel">
+                        <font key="font" metaFont="system" size="12"/>
+                        <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
             <point key="canvasLocation" x="-735.5" y="-661.5"/>
         </customView>

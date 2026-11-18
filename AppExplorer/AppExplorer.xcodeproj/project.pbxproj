@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F6000000000D03 /* SoqlDocs.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D02 /* SoqlDocs.m */; };
+		A1B2C3D4E5F6000000000D04 /* SoqlDocs.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D02 /* SoqlDocs.m */; };
+		A1B2C3D4E5F6000000000D13 /* SnippetLibrary.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D12 /* SnippetLibrary.m */; };
+		A1B2C3D4E5F6000000000D14 /* SnippetLibrary.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D12 /* SnippetLibrary.m */; };
+		A1B2C3D4E5F6000000000D22 /* snippets.json in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D21 /* snippets.json */; };
+		A1B2C3D4E5F6000000000D32 /* HelpDocsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D31 /* HelpDocsTests.m */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
@@ -254,6 +260,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4E5F6000000000D01 /* SoqlDocs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SoqlDocs.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D02 /* SoqlDocs.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SoqlDocs.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D11 /* SnippetLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SnippetLibrary.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D12 /* SnippetLibrary.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SnippetLibrary.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D21 /* snippets.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = snippets.json; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D31 /* HelpDocsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HelpDocsTests.m; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 		190BF657BA880DE3A8326501 /* Pods-SoqlXplorer.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SoqlXplorer.release.xcconfig"; path = "Target Support Files/Pods-SoqlXplorer/Pods-SoqlXplorer.release.xcconfig"; sourceTree = "<group>"; };
@@ -519,6 +531,9 @@
 				F4A2B8FE2718AF3600C20A42 /* ZKQueryResult+Display.m */,
 				F45DDFDC0AABBA6100ED0BA0 /* Explorer.h */,
 				F45DDFDB0AABBA6100ED0BA0 /* Explorer.m */,
+				A1B2C3D4E5F6000000000D11 /* SnippetLibrary.h */,
+				A1B2C3D4E5F6000000000D12 /* SnippetLibrary.m */,
+				A1B2C3D4E5F6000000000D21 /* snippets.json */,
 				F494FA3C0F7EFDD2001216EC /* GlossShader */,
 				F4B8AFC518A8540800FE114F /* IconProvider.h */,
 				F48B6B8A1969E68700496C82 /* Prefs.h */,
@@ -794,6 +809,7 @@
 				F4E0F2BB256F15A500446C2B /* QRWrapperTest.m */,
 				F48804DC2592BE57001D56F6 /* CaseInsensitiveKeyTest.m */,
 				F4C889D12624F272006D606A /* SoqlTokenizerTests.m */,
+				A1B2C3D4E5F6000000000D31 /* HelpDocsTests.m */,
 				F4394F9B264981C000ABFA2B /* describes.xml */,
 				F4DE4053256205D300FBA200 /* Info.plist */,
 			);
@@ -819,6 +835,8 @@
 				F4BD5DDC264760A000ACBBAB /* DescribeExtras.m */,
 				F46070AD285BD78700EB7F5C /* Completions.h */,
 				F46070AE285BD78700EB7F5C /* Completions.m */,
+				A1B2C3D4E5F6000000000D01 /* SoqlDocs.h */,
+				A1B2C3D4E5F6000000000D02 /* SoqlDocs.m */,
 			);
 			name = SoqlSyntax;
 			sourceTree = "<group>";
@@ -993,6 +1011,7 @@
 			files = (
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
 				F4C8BF332197C5740000E312 /* Credits.rtf in Resources */,
+				A1B2C3D4E5F6000000000D22 /* snippets.json in Resources */,
 				F413C7260AACB9B4000A8CDC /* sf.icns in Resources */,
 				F4BBAA152186C3E100647C27 /* Media.xcassets in Resources */,
 				F4E319492198ECE3009B8C4F /* querySavePanel.xib in Resources */,
@@ -1179,6 +1198,8 @@
 				F4AC556C15996D8500F5CA45 /* ZKRunTestFailure.m in Sources */,
 				F4AC556D15996D8500F5CA45 /* zkRunTestResult.m in Sources */,
 				F4DF0B4F26388CFF00B3A1A9 /* SoqlFunction.m in Sources */,
+				A1B2C3D4E5F6000000000D03 /* SoqlDocs.m in Sources */,
+				A1B2C3D4E5F6000000000D13 /* SnippetLibrary.m in Sources */,
 				F4D7831E15D49F7B00D00BB9 /* AppDelegate.m in Sources */,
 				F4D7833415D5F46600D00BB9 /* BaseUserBasedController.m in Sources */,
 				F4D7836B15D8814C00D00BB9 /* ZKDescribe_Reporting.m in Sources */,
@@ -1198,6 +1219,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				F4DF0B5F2638BDA100B3A1A9 /* SoqlFunction.m in Sources */,
+				A1B2C3D4E5F6000000000D04 /* SoqlDocs.m in Sources */,
+				A1B2C3D4E5F6000000000D14 /* SnippetLibrary.m in Sources */,
+				A1B2C3D4E5F6000000000D32 /* HelpDocsTests.m in Sources */,
 				F4408FF02562F4C1005E8BB7 /* QueryColumns.m in Sources */,
 				F4BD5DD926470C8800ACBBAB /* Prefs.m in Sources */,
 				F46070B0285BD78700EB7F5C /* Completions.m in Sources */,

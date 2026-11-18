@@ -32,6 +32,7 @@ typedef BOOL (^CompletionCallback)(ZKTextView*,id<ZKTextViewCompletion>);
 -(NSString*)finalInsertionText;
 -(CompletionCallback)onFinalInsert;
 -(NSImage*)icon;
+-(NSString*)documentation;    // may be nil
 @end
 
 @protocol ZKTextViewDelegate <NSTextViewDelegate>
@@ -46,6 +47,7 @@ typedef BOOL (^CompletionCallback)(ZKTextView*,id<ZKTextViewCompletion>);
 @property  (strong,nonatomic) IBOutlet NSPopover *completionsPopover;
 @property  (strong,nonatomic) IBOutlet NSTableView *table;
 @property  (strong,nonatomic) IBOutlet NSScrollView *tableScollView;
+@property  (strong,nonatomic) IBOutlet NSTextField *docsText;     // shows the documentation for the selected completion
 
 -(IBAction)completionDoubleClicked:(id)sender;
 

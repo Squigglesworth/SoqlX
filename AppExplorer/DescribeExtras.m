@@ -21,6 +21,7 @@
 
 #import "DescribeExtras.h"
 #import <objc/runtime.h>
+#import <ZKSforce/ZKSforce.h>
 #import "CaseInsensitiveStringKey.h"
 #import "SoqlToken.h"
 #import "Completion.h"
@@ -63,7 +64,17 @@
 -(NSArray<Completion*>*)parentRelCompletions {
     NSArray<Completion*> *comps = objc_getAssociatedObject(self, @selector(parentRelCompletions));
     if (comps == nil) {
-        comps = [Completion completions:[self.parentRelationshipsByName.allValues valueForKey:@"relationshipName"] type:TTRelationship];
+        NSArray<ZKDescribeField*> *relFields = self.parentRelationshipsByName.allValues;
+        NSMutableArray<Completion*> *built = [NSMutableArray arrayWithCapacity:relFields.count];
+        for (ZKDescribeField *f in relFields) {
+            Completion *c = [Completion txt:f.relationshipName type:TTRelationship];
+            c.documentation = [NSString stringWithFormat:@"%@ \u2192 %@\n%@",
+                               f.relationshipName,
+                               [f.referenceTo componentsJoinedByString:@", "],
+                               [f documentation]];
+            [built addObject:c];
+        }
+        comps = built;
         for (Completion *c in comps) {
             c.finalInsertionText = [NSString stringWithFormat:@"%@.Id", c.finalInsertionText];
             c.onFinalInsert = ^BOOL(ZKTextView *tv, id<ZKTextViewCompletion> c) {
@@ -88,8 +99,121 @@
     Completion *c = objc_getAssociatedObject(self, @selector(completion));
     if (c == nil) {
         c = [Completion txt:self.name type:TTField];
+        c.documentation = [self documentation];
         objc_setAssociatedObject(self, @selector(completion), c, OBJC_ASSOCIATION_RETAIN);
     }
     return c;
+}
+@end
+
+@implementation ZKDescribeSObject (Documentation)
+-(NSString*)documentation {
+    NSMutableArray<NSString*> *lines = [NSMutableArray arrayWithCapacity:3];
+    NSString *label = self.label.length > 0 ? self.label : self.name;
+    if ([label isEqualToString:self.name]) {
+        [lines addObject:self.name];
+    } else {
+        [lines addObject:[NSString stringWithFormat:@"%@ (%@)", label, self.name]];
+    }
+    NSMutableArray<NSString*> *attrs = [NSMutableArray arrayWithCapacity:8];
+    if (self.keyPrefix.length > 0) [attrs addObject:[NSString stringWithFormat:@"key prefix %@", self.keyPrefix]];
+    if (self.custom)        [attrs addObject:@"custom"];
+    if (self.customSetting) [attrs addObject:@"custom setting"];
+    if (!self.queryable)    [attrs addObject:@"not queryable"];
+    if (self.createable)    [attrs addObject:@"createable"];
+    if (self.updateable)    [attrs addObject:@"updateable"];
+    if (self.deletable)     [attrs addObject:@"deletable"];
+    if (self.searchable)    [attrs addObject:@"searchable"];
+    if (self.feedEnabled)   [attrs addObject:@"feed enabled"];
+    if (attrs.count > 0) {
+        [lines addObject:[attrs componentsJoinedByString:@" \u00b7 "]];
+    }
+    [lines addObject:[NSString stringWithFormat:@"%lu fields \u00b7 %lu child relationships",
+                      (unsigned long)self.fields.count, (unsigned long)self.childRelationships.count]];
+    return [lines componentsJoinedByString:@"\n"];
+}
+@end
+
+@implementation ZKDescribeField (Documentation)
+
+-(NSString*)typeDescription {
+    NSString *type = self.type.length > 0 ? self.type : @"unknown";
+    NSString *lower = type.lowercaseString;
+    if ([lower isEqualToString:@"reference"]) {
+        if (self.referenceTo.count > 0) {
+            return [NSString stringWithFormat:@"reference to %@", [self.referenceTo componentsJoinedByString:@", "]];
+        }
+        return type;
+    }
+    if ([lower isEqualToString:@"string"] || [lower isEqualToString:@"textarea"] || [lower isEqualToString:@"picklist"] ||
+        [lower isEqualToString:@"multipicklist"] || [lower isEqualToString:@"email"] || [lower isEqualToString:@"phone"] ||
+        [lower isEqualToString:@"url"] || [lower isEqualToString:@"encryptedstring"] || [lower isEqualToString:@"combobox"]) {
+        if (self.length > 0) {
+            return [NSString stringWithFormat:@"%@(%ld)", type, (long)self.length];
+        }
+        return type;
+    }
+    if ([lower isEqualToString:@"double"] || [lower isEqualToString:@"currency"] || [lower isEqualToString:@"percent"]) {
+        if (self.precision > 0) {
+            return [NSString stringWithFormat:@"%@(%ld,%ld)", type, (long)self.precision, (long)self.scale];
+        }
+        return type;
+    }
+    if ([lower isEqualToString:@"int"] && self.digits > 0) {
+        return [NSString stringWithFormat:@"%@(%ld)", type, (long)self.digits];
+    }
+    return type;
+}
+
+-(NSString*)documentation {
+    NSMutableArray<NSString*> *lines = [NSMutableArray arrayWithCapacity:5];
+    NSString *label = self.label.length > 0 ? self.label : self.name;
+    if ([label isEqualToString:self.name]) {
+        [lines addObject:self.name];
+    } else {
+        [lines addObject:[NSString stringWithFormat:@"%@ (%@)", label, self.name]];
+    }
+    NSMutableArray<NSString*> *attrs = [NSMutableArray arrayWithCapacity:8];
+    [attrs addObject:[self typeDescription]];
+    if (self.custom)        [attrs addObject:@"custom"];
+    if (self.calculated)    [attrs addObject:@"formula"];
+    if (self.autoNumber)    [attrs addObject:@"auto number"];
+    if (self.externalId)    [attrs addObject:@"external id"];
+    if (self.unique)        [attrs addObject:@"unique"];
+    if (self.nameField)     [attrs addObject:@"name field"];
+    if (!self.nillable && self.createable && !self.defaultedOnCreate) [attrs addObject:@"required"];
+    if (!self.updateable && !self.createable) {
+        [attrs addObject:@"read only"];
+    } else if (!self.updateable) {
+        [attrs addObject:@"create only"];
+    }
+    if (!self.filterable)   [attrs addObject:@"not filterable"];
+    if (!self.sortable)     [attrs addObject:@"not sortable"];
+    if (!self.groupable)    [attrs addObject:@"not groupable"];
+    [lines addObject:[attrs componentsJoinedByString:@" \u00b7 "]];
+
+    NSArray *picklist = self.picklistValues;
+    if (picklist.count > 0) {
+        NSMutableArray<NSString*> *vals = [NSMutableArray arrayWithCapacity:8];
+        NSUInteger active = 0;
+        for (ZKPicklistEntry *ple in picklist) {
+            if (!ple.active) continue;
+            active++;
+            if (vals.count < 8) {
+                [vals addObject:ple.value];
+            }
+        }
+        if (vals.count > 0) {
+            NSString *more = active > vals.count ? [NSString stringWithFormat:@", +%lu more", (unsigned long)(active - vals.count)] : @"";
+            [lines addObject:[NSString stringWithFormat:@"Values: %@%@", [vals componentsJoinedByString:@", "], more]];
+        }
+    }
+    if (self.inlineHelpText.length > 0) {
+        [lines addObject:[NSString stringWithFormat:@"Help: %@", self.inlineHelpText]];
+    }
+    if (self.calculatedFormula.length > 0) {
+        [lines addObject:[NSString stringWithFormat:@"Formula: %@", self.calculatedFormula]];
+    }
+    return [lines componentsJoinedByString:@"\n"];
 }
 @end

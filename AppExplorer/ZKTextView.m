@@ -198,6 +198,7 @@
         } else {
             [self.table selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
         }
+        [self updateDocsForSelectedCompletion];
         NSRange sel = [self selectedRange];
         NSRange theTextRange = [[self layoutManager] glyphRangeForCharacterRange:sel actualCharacterRange:NULL];
         NSRect layoutRect = [[self layoutManager] boundingRectForGlyphRange:theTextRange inTextContainer:[self textContainer]];
@@ -264,6 +265,26 @@
     id<ZKTextViewCompletion> c = self.completions[[sender selectedRow]];
     [self insertCompletion:c.finalInsertionText forPartialWordRange:self.rangeForUserCompletion movement:NSTextMovementOther isFinal:YES];
     [self.completionsPopover performClose:self];
+}
+
+// Shows the reference text for the currently selected completion in the docs area of
+// the popup (if there is one). Keywords/operators get static docs, fields & objects show
+// their describe info, functions show their signature.
+-(void)updateDocsForSelectedCompletion {
+    if (self.docsText == nil) {
+        return;
+    }
+    NSInteger row = self.table.selectedRow;
+    NSString *docs = nil;
+    if (row >= 0 && row < self.completions.count) {
+        id<ZKTextViewCompletion> c = self.completions[row];
+        docs = c.documentation;
+    }
+    self.docsText.stringValue = docs == nil ? @"" : docs;
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    [self updateDocsForSelectedCompletion];
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {

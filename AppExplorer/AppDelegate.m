@@ -29,6 +29,7 @@
 #import "SessionIdAuthInfo.h"
 #import "Defaults.h"
 #import "TStamp.h"
+#import "SnippetLibrary.h"
 
 @interface ZKOAuthInfo(params)
 +(NSDictionary*)decodeParams:(NSString*)fragment error:(NSError **)err;
@@ -89,6 +90,35 @@
 - (IBAction)launchHelp:(id)sender {
     NSString *help = [NSBundle mainBundle].infoDictionary[@"ZKHelpUrl"];
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:help]];
+}
+
+// MARK: - Query > Insert Snippet
+
+// We're the delegate of the Insert Snippet submenu, so the snippet list (including the
+// user's own snippets file) is re-read each time the menu is opened. No restart needed
+// after editing the file.
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    SnippetLibrary *lib = [SnippetLibrary shared];
+    [lib reload];
+    [lib populateMenu:menu action:@selector(insertSnippet:)];
+}
+
+// Without this, AppKit calls menuNeedsUpdate: (and so re-reads the snippets file) on every
+// key press while it looks for key equivalents. None of the snippet items have one.
+- (BOOL)menuHasKeyEquivalent:(NSMenu *)menu forEvent:(NSEvent *)event target:(id *)target action:(SEL *)action {
+    return NO;
+}
+
+- (IBAction)editUserSnippets:(id)sender {
+    NSError *err = nil;
+    NSURL *url = [[SnippetLibrary shared] ensureUserSnippetsFile:&err];
+    if (url == nil) {
+        NSAlert *alert = [NSAlert alertWithError:err];
+        alert.messageText = @"Unable to create the snippets file";
+        [alert runModal];
+        return;
+    }
+    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[url]];
 }
 
 // If the version of the app has changed, then reset any pref setting that is overriding the API version from

@@ -274,6 +274,20 @@
                                     <action selector="queryMore:" target="-1" id="5OO-bu-3EB"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="snp-se-p01"/>
+                            <menuItem title="Insert Snippet" id="snp-mi-t01">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Insert Snippet" id="snp-mn-u01" userLabel="SnippetsMenu">
+                                    <items>
+                                        <menuItem title="Loading…" enabled="NO" id="snp-mi-l01">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        </menuItem>
+                                    </items>
+                                    <connections>
+                                        <outlet property="delegate" destination="1677" id="snp-ou-d01"/>
+                                    </connections>
+                                </menu>
+                            </menuItem>
                         </items>
                     </menu>
                 </menuItem>

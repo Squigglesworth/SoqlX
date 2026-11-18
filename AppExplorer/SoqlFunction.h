@@ -46,9 +46,16 @@ typedef NSString*(^ExampleProvider)(ZKDescribeSObject*);
 +(NSPredicate*)defaultFuncFilter;
 
 +(instancetype)fn:(NSString*)name args:(NSArray<SoqlFuncArg*>*)args;
++(instancetype)fn:(NSString*)name args:(NSArray<SoqlFuncArg*>*)args doc:(NSString*)doc;
 
 @property (strong,nonatomic) NSString *name;
 @property (strong,nonatomic) NSArray<SoqlFuncArg*>* args;
+// A sentence or two describing what the function does, shown in the completions popup.
+@property (strong,nonatomic) NSString *doc;
+// e.g. CALENDAR_YEAR(field|function), derived from the args.
+@property (readonly,nonatomic) NSString *signature;
+// signature + doc, the text shown in the completions popup.
+@property (readonly,nonatomic) NSString *documentation;
 -(Completion*)completionOn:(ZKDescribeSObject*)primary;
 // returns an error token if there's a problem
 -(Token*)validateArgCount:(Token*)tFunc;

@@ -7,6 +7,18 @@ write and run SOQL queries, make edits to data, and to run Apex code.
 ![schema viewer](https://www.pocketsoap.com/osx/soqlx/help/schema.png)
 
 
+## In-app help
+
+* **Completions show reference text.** The autocomplete popup has a documentation pane under the list: keywords,
+  operators and date literals get a short description, functions show their signature, and fields, objects and
+  relationships show their describe info (label, type, picklist values, help text, formula).
+* **Hover in the schema viewer.** Resting the mouse on a field or an object title in the schema view shows the same
+  describe info as a tooltip.
+* **Query snippets.** `Query > Insert Snippet` has a library of starting points (relationships, aggregates, date
+  literals, paging, SOSL, and so on). `{SObject}` in a snippet is replaced with the object selected in the sidebar.
+  `Edit My Snippets…` creates `~/Library/Application Support/SoqlX/snippets.json` where you can add your own;
+  it is re-read every time the menu opens. The format is the same as `AppExplorer/snippets.json`.
+
 ## Download
 
 You can download the builds of the latest version of SoqlX from its [homepage](https://superfell.com/osx/soqlx/)

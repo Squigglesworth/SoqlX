@@ -27,9 +27,11 @@
 @class SoqlXWindowController;
 @class OAuthMenuManager;
 
-@interface AppDelegate : NSObject<NSApplicationDelegate, SUUpdaterDelegate>
+@interface AppDelegate : NSObject<NSApplicationDelegate, SUUpdaterDelegate, NSMenuDelegate>
 
 - (IBAction)launchHelp:(id)sender;
+// Reveals the user's snippets.json in the Finder, creating it with an example first if needed.
+- (IBAction)editUserSnippets:(id)sender;
 - (IBAction)openNewWindow:(id)sender;
 - (IBAction)showFontPrefs:(id)sender;
 - (void)openNewWindowForOAuthCredential:(id)sender;

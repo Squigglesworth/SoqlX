@@ -51,4 +51,8 @@
 - (void)layoutBoxes;
 - (BOOL)mousePointerIsInsideRect:(NSRect)rect;
 - (NSTrackingRectTag)addTrackingRect:(NSRect)rect owner:(id)owner;
+
+// Re-registers the hover tooltips (field & object documentation) for all the boxes
+// on the next pass through the run loop. Safe to call repeatedly.
+- (void)scheduleFieldToolTipUpdate;
 @end

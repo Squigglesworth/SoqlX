@@ -28,6 +28,7 @@
 #import <ZKSforce/ZKDescribeSObject.h>
 #import "RRGlossCausticShader.h"
 #import "ZKDescribe_Reporting.h"
+#import "DescribeExtras.h"
 
 @interface SchemaView ()
 - (NSArray *)childSObjectsSkipping:(NSArray *)toSkip;
@@ -272,7 +273,63 @@ static const float minSpacerSize = 5.0f;
     [self setFrameSize:visibleSize];
     NSRect bounds = self.bounds;
     centralBox.origin = NSMakePoint(NSMidX(bounds) - (cb.width/2), NSMidY(bounds) - (cb.height/2));
+    [self scheduleFieldToolTipUpdate];
     [self setNeedsDisplay:YES];
+}
+
+// MARK: - Hover documentation
+
+- (void)scheduleFieldToolTipUpdate {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(updateFieldToolTips) object:nil];
+    [self performSelector:@selector(updateFieldToolTips) withObject:nil afterDelay:0];
+}
+
+- (void)addToolTipsForBox:(SObjectBox *)box {
+    if (box == nil || box.sobject == nil) return;
+    [self addToolTipRect:[box titleRect] owner:self userData:NULL];
+    for (ZKDescribeField *f in [box fieldsToDisplay]) {
+        NSRect r = [box rectOfFieldPaddedToEdges:f.name];
+        if (NSIsEmptyRect(r)) continue;
+        [self addToolTipRect:r owner:self userData:NULL];
+    }
+}
+
+- (void)updateFieldToolTips {
+    [self removeAllToolTips];
+    if (self.isPrinting) return;
+    [self addToolTipsForBox:centralBox];
+    for (SObjectBox *b in foreignKeys) {
+        [self addToolTipsForBox:b];
+    }
+    for (SObjectBox *b in children) {
+        [self addToolTipsForBox:b];
+    }
+}
+
+- (SObjectBox *)boxContainingPoint:(NSPoint)p {
+    if (NSPointInRect(p, [centralBox bounds])) return centralBox;
+    for (SObjectBox *b in foreignKeys) {
+        if (NSPointInRect(p, [b bounds])) return b;
+    }
+    for (SObjectBox *b in children) {
+        if (NSPointInRect(p, [b bounds])) return b;
+    }
+    return nil;
+}
+
+// NSView tooltip owner callback, the point is in our coordinate space.
+- (NSString *)view:(NSView *)view stringForToolTip:(NSToolTipTag)tag point:(NSPoint)point userData:(void *)data {
+    SObjectBox *box = [self boxContainingPoint:point];
+    if (box == nil) return nil;
+    for (ZKDescribeField *f in [box fieldsToDisplay]) {
+        if (NSPointInRect(point, [box rectOfFieldPaddedToEdges:f.name])) {
+            return [f documentation];
+        }
+    }
+    if (NSPointInRect(point, [box titleRect])) {
+        return [box.sobject documentation];
+    }
+    return nil;
 }
 
 // SchemaView

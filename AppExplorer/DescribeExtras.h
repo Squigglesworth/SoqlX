@@ -39,3 +39,13 @@
 @interface ZKDescribeField (Completion)
 -(Completion*)completion;
 @end
+
+// Short, multi-line reference text built from the describe metadata. Used by the
+// completions popup and the schema view tooltips.
+@interface ZKDescribeSObject (Documentation)
+-(NSString*)documentation;
+@end
+
+@interface ZKDescribeField (Documentation)
+-(NSString*)documentation;
+@end

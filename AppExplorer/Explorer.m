@@ -36,6 +36,7 @@
 #import "AppDelegate.h"
 #import "SoqlTokenizer.h"
 #import "ZKTextView.h"
+#import "SnippetLibrary.h"
 
 static NSString *soqlTabId = @"soql";
 static NSString *schemaTabId = @"schema";
@@ -504,6 +505,36 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     NSString *t = item.text;
     if (t == nil || t.length == 0) return;
     [self setSoqlString:t];
+}
+
+- (IBAction)insertSnippet:(id)sender {
+    SoqlSnippet *snippet = nil;
+    if ([sender respondsToSelector:@selector(representedObject)]) {
+        snippet = [sender representedObject];
+    }
+    if (![snippet isKindOfClass:[SoqlSnippet class]]) {
+        NSLog(@"insertSnippet: called without a SoqlSnippet as the representedObject");
+        return;
+    }
+    // {SObject} in the snippet becomes whatever is selected in the sidebar, if anything.
+    NSString *text = [snippet soqlForSObject:[self selectedSObjectName]];
+    [soqlSchemaTabs selectTabViewItemWithIdentifier:soqlTabId];
+    [myWindow makeFirstResponder:soql];
+    NSString *existing = [self soqlString];
+    NSRange target = soql.selectedRange;
+    if ([[existing stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0) {
+        // editor is empty (or just whitespace), replace the lot.
+        target = NSMakeRange(0, existing.length);
+    } else if (target.length == 0 && target.location > 0 && target.location <= existing.length) {
+        // inserting mid-text, make sure the snippet starts on its own line.
+        unichar prev = [existing characterAtIndex:target.location-1];
+        if (prev != '\n' && prev != '\r') {
+            text = [@"\n" stringByAppendingString:text];
+        }
+    }
+    // insertText:replacementRange: goes through the normal editing path, so undo and the
+    // syntax colorizer both see the change.
+    [soql insertText:text replacementRange:target];
 }
 
 - (NSString *)soqlString {

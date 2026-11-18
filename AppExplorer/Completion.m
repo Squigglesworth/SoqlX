@@ -21,6 +21,7 @@
 
 #import "Completion.h"
 #import "ColorizerStyle.h"
+#import "SoqlDocs.h"
 
 @interface Icons()
 @property (strong,nonatomic) NSDictionary<NSNumber*, NSImage*> *icons;
@@ -104,7 +105,16 @@ static Icons *iconInstance;
     c.finalInsertionText = fi;
     c.type = t;
     c.icon = [Icons iconFor:t];
+    c.documentation = [SoqlDocs docFor:d type:t];
     return c;
+}
+
+-(NSString*)documentation {
+    if (_documentation == nil && self.documentationProvider != nil) {
+        _documentation = self.documentationProvider();
+        self.documentationProvider = nil;
+    }
+    return _documentation;
 }
 
 -(NSString*)description {

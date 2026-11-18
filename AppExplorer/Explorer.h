@@ -86,6 +86,9 @@
 - (IBAction)filterSObjectListView:(id)sender;
 - (IBAction)updateDetailsRecentSelection:(id)sender;
 - (IBAction)refreshMetadata:(id)sender;
+// Inserts the SoqlSnippet in the sender's representedObject into the query editor at the
+// insertion point (replacing the selection, or the whole text if the editor is empty).
+- (IBAction)insertSnippet:(id)sender;
 
 // If not nil the soql query is asocicated with a file. i.e. it was loaded from, or saved to.
 @property (strong) NSURL *queryFilename;

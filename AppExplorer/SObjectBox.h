@@ -62,6 +62,8 @@
 @property (getter=isHighlighted, readonly) BOOL highlighted;
 @property (readonly) NSSize size;
 @property (readonly) NSPoint centerPoint;
+@property (readonly) NSRect bounds;        // in the schema view's coordinate space
+@property (readonly) NSRect titleRect;     // the title bar portion of bounds
 
 @property (assign) NSPoint origin;
 

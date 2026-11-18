@@ -630,11 +630,18 @@ typedef NSMutableDictionary<NSString *, Completion*> CompletionBySObject;
 
 -(BOOL)addSObjectToToken:(Token*)t {
     NSArray<Completion*> *completions = [Completion completions:self.describer.allQueryableSObjects type:TTSObject];
+    __weak id<TokenizerDescriber> describer = self.describer;
     for (Completion *c in completions) {
         NSImage *objIcon = [self.describer iconForSObject:c.displayText];
         if (objIcon != nil) {
             c.icon = objIcon;
         }
+        NSString *objName = c.displayText;
+        c.documentationProvider = ^NSString*{
+            // this is only called for the completion the user has selected in the popup, so
+            // asking the describer here (which may kick off a describe call) is fine.
+            return [[describer describe:objName] documentation];
+        };
     }
     [t.completions addObjectsFromArray:completions];
     if (![self.describer knownSObject:t.tokenTxt]) {

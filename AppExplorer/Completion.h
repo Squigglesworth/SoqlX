@@ -37,4 +37,12 @@
 @property (copy,   nonatomic) CompletionCallback onFinalInsert;  // callback to customize outcome of final insertion.
 @property (assign, nonatomic) TokenType type;
 @property (strong, nonatomic) NSImage *icon;                    // will default to Icons.iconFor:(Type) if not set.
+
+// Reference text shown in the completions popup for the selected item. Keywords, operators and
+// date literals are documented automatically (see SoqlDocs), fields/objects/functions set this
+// from the describe/function metadata. nil/empty means there's nothing to show.
+@property (strong, nonatomic) NSString *documentation;
+// Optional, lazily builds documentation the first time its asked for. Useful when the
+// documentation depends on data that may not be available when the completion is created.
+@property (copy,   nonatomic) NSString*(^documentationProvider)(void);
 @end

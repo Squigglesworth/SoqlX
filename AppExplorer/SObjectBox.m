@@ -207,6 +207,12 @@ static const float titleIconGap  = 6.0f;
     return sz.height;
 }
 
+-(NSRect)titleRect {
+    NSRect b = [self bounds];
+    float th = [self titleHeight] + borderWidth * 2;
+    return NSMakeRect(b.origin.x, NSMaxY(b) - th, b.size.width, th);
+}
+
 -(NSPoint)positionForMinusWidget {
     NSPoint plus = [self positionForPlusWidget];
     return NSMakePoint(plus.x - plusMinusSize, plus.y);
@@ -247,6 +253,7 @@ static const float titleIconGap  = 6.0f;
     fieldRects = positions;
     [self positionPlusMinusWidgets];
     [self resetTrackingRect];    
+    [view scheduleFieldToolTipUpdate];
     [view setNeedsDisplay:YES];
 }
 

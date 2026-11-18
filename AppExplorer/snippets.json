@@ -1,0 +1,392 @@
+[
+  {
+    "category": "Basics",
+    "name": "Select fields",
+    "summary": "The simplest query: a few fields from the selected object, limited to 100 rows.",
+    "soql": [
+      "SELECT Id, Name, CreatedDate",
+      "FROM {SObject}",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Basics",
+    "name": "Select all standard fields",
+    "summary": "FIELDS(STANDARD) expands to every standard field. Use FIELDS(ALL) or FIELDS(CUSTOM) with a LIMIT of 200 or less.",
+    "soql": [
+      "SELECT FIELDS(STANDARD)",
+      "FROM {SObject}",
+      "LIMIT 200"
+    ]
+  },
+  {
+    "category": "Basics",
+    "name": "Record by Id",
+    "summary": "Look up a single record. Paste the 15 or 18 character Id into the quotes.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM {SObject}",
+      "WHERE Id = ''"
+    ]
+  },
+  {
+    "category": "Basics",
+    "name": "Count rows",
+    "summary": "COUNT() with no other fields returns just the number of matching rows.",
+    "soql": [
+      "SELECT COUNT()",
+      "FROM {SObject}"
+    ]
+  },
+  {
+    "category": "Basics",
+    "name": "Recently modified",
+    "summary": "The most recently changed records, newest first.",
+    "soql": [
+      "SELECT Id, Name, LastModifiedDate, LastModifiedBy.Name",
+      "FROM {SObject}",
+      "ORDER BY LastModifiedDate DESC",
+      "LIMIT 50"
+    ]
+  },
+  {
+    "category": "Filtering",
+    "name": "Name starts with",
+    "summary": "LIKE is case insensitive. % matches any run of characters, _ matches one character.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM {SObject}",
+      "WHERE Name LIKE 'A%'",
+      "ORDER BY Name",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Filtering",
+    "name": "Value in a list",
+    "summary": "IN matches any of the listed values. Also works with a semi-join sub-query, see Relationships.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM {SObject}",
+      "WHERE Name IN ('Acme', 'Globex', 'Initech')"
+    ]
+  },
+  {
+    "category": "Filtering",
+    "name": "Empty and not empty",
+    "summary": "SOQL uses = NULL and != NULL rather than IS NULL.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM {SObject}",
+      "WHERE Name != NULL AND Description = NULL",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Filtering",
+    "name": "Grouped AND / OR",
+    "summary": "Use parentheses whenever AND and OR are mixed, SOQL has no implicit precedence you want to rely on.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM {SObject}",
+      "WHERE (CreatedDate = THIS_YEAR OR LastModifiedDate = THIS_YEAR)",
+      "  AND NOT Name LIKE 'Test%'",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Filtering",
+    "name": "Multi-select picklist",
+    "summary": "INCLUDES and EXCLUDES are the only operators for multi-select picklists. 'a;b' means both a and b are selected.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM {SObject}",
+      "WHERE MultiPicklist__c INCLUDES ('Value A', 'Value B;Value C')"
+    ]
+  },
+  {
+    "category": "Filtering",
+    "name": "My records (USING SCOPE)",
+    "summary": "USING SCOPE restricts rows to a predefined set such as Mine, Team, Delegated, Everything, or My_Territory.",
+    "soql": [
+      "SELECT Id, Name, OwnerId",
+      "FROM {SObject}",
+      "USING SCOPE Mine",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Relationships",
+    "name": "Parent fields (lookup)",
+    "summary": "Walk up a lookup with dot notation, up to five levels. Custom relationships use __r.",
+    "soql": [
+      "SELECT Id, Name, Account.Name, Account.Owner.Name, CreatedBy.Name",
+      "FROM Contact",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Relationships",
+    "name": "Child records (sub-query)",
+    "summary": "A nested SELECT on the child relationship name returns the related children with each parent row.",
+    "soql": [
+      "SELECT Id, Name,",
+      "  (SELECT Id, FirstName, LastName, Email FROM Contacts ORDER BY LastName)",
+      "FROM Account",
+      "LIMIT 50"
+    ]
+  },
+  {
+    "category": "Relationships",
+    "name": "Parents that have children (semi-join)",
+    "summary": "IN (SELECT ...) keeps only parents with at least one matching child. The sub-query must select a single Id field.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM Account",
+      "WHERE Id IN (SELECT AccountId FROM Opportunity WHERE IsWon = true)"
+    ]
+  },
+  {
+    "category": "Relationships",
+    "name": "Parents without children (anti-join)",
+    "summary": "NOT IN (SELECT ...) keeps only parents with no matching child.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM Account",
+      "WHERE Id NOT IN (SELECT AccountId FROM Contact)"
+    ]
+  },
+  {
+    "category": "Relationships",
+    "name": "Polymorphic field (TYPEOF)",
+    "summary": "Select different fields depending on the concrete type behind a polymorphic lookup such as Task.Who or Event.What.",
+    "soql": [
+      "SELECT Id, Subject,",
+      "  TYPEOF Who",
+      "    WHEN Contact THEN Name, Account.Name",
+      "    WHEN Lead THEN Name, Company",
+      "    ELSE Name",
+      "  END",
+      "FROM Task",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Aggregates",
+    "name": "Count by field",
+    "summary": "Every non-aggregated field in SELECT must appear in GROUP BY. The count column is returned as expr0 unless aliased.",
+    "soql": [
+      "SELECT StageName, COUNT(Id) Records, SUM(Amount) Total",
+      "FROM Opportunity",
+      "GROUP BY StageName",
+      "ORDER BY COUNT(Id) DESC"
+    ]
+  },
+  {
+    "category": "Aggregates",
+    "name": "Find duplicates (HAVING)",
+    "summary": "HAVING filters groups after they're built, so it can use aggregate functions where WHERE can't.",
+    "soql": [
+      "SELECT Email, COUNT(Id) Dupes",
+      "FROM Contact",
+      "WHERE Email != NULL",
+      "GROUP BY Email",
+      "HAVING COUNT(Id) > 1",
+      "ORDER BY COUNT(Id) DESC"
+    ]
+  },
+  {
+    "category": "Aggregates",
+    "name": "Min, max and average",
+    "summary": "Aggregates without GROUP BY return a single row.",
+    "soql": [
+      "SELECT MIN(Amount), MAX(Amount), AVG(Amount), COUNT_DISTINCT(AccountId)",
+      "FROM Opportunity",
+      "WHERE IsClosed = true"
+    ]
+  },
+  {
+    "category": "Aggregates",
+    "name": "Subtotals (ROLLUP)",
+    "summary": "ROLLUP adds subtotal rows for each grouping level plus a grand total. GROUPING(field) is 1 on the subtotal rows.",
+    "soql": [
+      "SELECT StageName, Type, COUNT(Id) Records, GROUPING(StageName) IsStageTotal, GROUPING(Type) IsTypeTotal",
+      "FROM Opportunity",
+      "GROUP BY ROLLUP (StageName, Type)"
+    ]
+  },
+  {
+    "category": "Dates",
+    "name": "Created this week / month / year",
+    "summary": "Date literals like THIS_WEEK, LAST_MONTH and THIS_FISCAL_QUARTER are evaluated in the user's time zone.",
+    "soql": [
+      "SELECT Id, Name, CreatedDate",
+      "FROM {SObject}",
+      "WHERE CreatedDate = THIS_MONTH",
+      "ORDER BY CreatedDate DESC",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Dates",
+    "name": "Last N days",
+    "summary": "LAST_N_DAYS:n runs from midnight n days ago through to the end of today. NEXT_N_DAYS, LAST_N_WEEKS, LAST_N_MONTHS and friends work the same way.",
+    "soql": [
+      "SELECT Id, Name, LastModifiedDate",
+      "FROM {SObject}",
+      "WHERE LastModifiedDate = LAST_N_DAYS:7",
+      "ORDER BY LastModifiedDate DESC"
+    ]
+  },
+  {
+    "category": "Dates",
+    "name": "Between two dates",
+    "summary": "Date literals are YYYY-MM-DD, date/time literals are YYYY-MM-DDThh:mm:ssZ (UTC) with no quotes.",
+    "soql": [
+      "SELECT Id, Name, CreatedDate",
+      "FROM {SObject}",
+      "WHERE CreatedDate >= 2024-01-01T00:00:00Z AND CreatedDate < 2025-01-01T00:00:00Z",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Dates",
+    "name": "Group by month",
+    "summary": "Date functions such as CALENDAR_MONTH and FISCAL_QUARTER can group and order rows. Wrap the field in CONVERTTIMEZONE to use the user's time zone instead of UTC.",
+    "soql": [
+      "SELECT CALENDAR_YEAR(CreatedDate) Yr, CALENDAR_MONTH(CreatedDate) Mth, COUNT(Id) Records",
+      "FROM {SObject}",
+      "WHERE CreatedDate = LAST_N_MONTHS:12",
+      "GROUP BY CALENDAR_YEAR(CreatedDate), CALENDAR_MONTH(CreatedDate)",
+      "ORDER BY CALENDAR_YEAR(CreatedDate), CALENDAR_MONTH(CreatedDate)"
+    ]
+  },
+  {
+    "category": "Sorting & Paging",
+    "name": "Sort by two fields, nulls last",
+    "summary": "The default sort is ascending with nulls first. NULLS LAST pushes empty values to the end.",
+    "soql": [
+      "SELECT Id, Name, Industry, AnnualRevenue",
+      "FROM Account",
+      "ORDER BY Industry ASC NULLS LAST, AnnualRevenue DESC",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Sorting & Paging",
+    "name": "Page with LIMIT and OFFSET",
+    "summary": "OFFSET skips rows and is capped at 2,000. For deeper paging, order by Id and filter WHERE Id > the last Id seen.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM {SObject}",
+      "ORDER BY Name",
+      "LIMIT 50 OFFSET 50"
+    ]
+  },
+  {
+    "category": "Sorting & Paging",
+    "name": "Page by Id (beyond 2,000 rows)",
+    "summary": "Keyset paging: run again with the last Id from the previous page to get the next page. No OFFSET limit.",
+    "soql": [
+      "SELECT Id, Name",
+      "FROM {SObject}",
+      "WHERE Id > '000000000000000AAA'",
+      "ORDER BY Id",
+      "LIMIT 200"
+    ]
+  },
+  {
+    "category": "Deleted & Archived",
+    "name": "Recycle bin (deleted records)",
+    "summary": "IsDeleted rows are only returned by queryAll, so run this with the Query All command (Shift-Cmd-R) rather than Query.",
+    "soql": [
+      "SELECT Id, Name, IsDeleted, LastModifiedDate",
+      "FROM {SObject}",
+      "WHERE IsDeleted = true",
+      "ORDER BY LastModifiedDate DESC",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Deleted & Archived",
+    "name": "Field history",
+    "summary": "Every object with field history tracking has a History object. For custom objects it's MyObject__History.",
+    "soql": [
+      "SELECT ParentId, Field, OldValue, NewValue, CreatedBy.Name, CreatedDate",
+      "FROM AccountHistory",
+      "ORDER BY CreatedDate DESC",
+      "LIMIT 100"
+    ]
+  },
+  {
+    "category": "Users & Setup",
+    "name": "Active users",
+    "summary": "Users with their profile and role names.",
+    "soql": [
+      "SELECT Id, Name, Username, Email, Profile.Name, UserRole.Name, LastLoginDate",
+      "FROM User",
+      "WHERE IsActive = true",
+      "ORDER BY Name"
+    ]
+  },
+  {
+    "category": "Users & Setup",
+    "name": "Record types for an object",
+    "summary": "Record types are rows in the RecordType object, filter by SobjectType.",
+    "soql": [
+      "SELECT Id, Name, DeveloperName, IsActive",
+      "FROM RecordType",
+      "WHERE SobjectType = '{SObject}'",
+      "ORDER BY Name"
+    ]
+  },
+  {
+    "category": "Users & Setup",
+    "name": "Apex classes and triggers",
+    "summary": "Setup metadata is queryable too. ApexClass, ApexTrigger, ApexPage and Flow all live in the Tooling and Enterprise APIs.",
+    "soql": [
+      "SELECT Id, Name, ApiVersion, Status, LengthWithoutComments, LastModifiedBy.Name, LastModifiedDate",
+      "FROM ApexClass",
+      "ORDER BY LastModifiedDate DESC"
+    ]
+  },
+  {
+    "category": "Users & Setup",
+    "name": "Login history",
+    "summary": "Who logged in, from where, and whether it worked.",
+    "soql": [
+      "SELECT UserId, LoginTime, LoginType, SourceIp, Status, Application, Browser",
+      "FROM LoginHistory",
+      "WHERE LoginTime = LAST_N_DAYS:7",
+      "ORDER BY LoginTime DESC",
+      "LIMIT 200"
+    ]
+  },
+  {
+    "category": "SOSL Search",
+    "name": "Find across all objects",
+    "summary": "SOSL searches text indexes across many objects at once. Terms support * and ? wildcards, and AND, OR, AND NOT.",
+    "soql": [
+      "FIND {acme*} IN ALL FIELDS",
+      "RETURNING Account(Id, Name), Contact(Id, Name, Email), Lead(Id, Name, Company)"
+    ]
+  },
+  {
+    "category": "SOSL Search",
+    "name": "Find in name fields with a filter",
+    "summary": "Each RETURNING object can have its own WHERE, ORDER BY and LIMIT.",
+    "soql": [
+      "FIND {smith} IN NAME FIELDS",
+      "RETURNING Contact(Id, Name, Account.Name WHERE Account.Industry = 'Technology' ORDER BY Name LIMIT 50)"
+    ]
+  },
+  {
+    "category": "SOSL Search",
+    "name": "Find by email or phone",
+    "summary": "EMAIL FIELDS and PHONE FIELDS restrict the search to those field types, which is much faster than ALL FIELDS.",
+    "soql": [
+      "FIND {jane@example.com} IN EMAIL FIELDS",
+      "RETURNING Contact(Id, Name, Email), Lead(Id, Name, Email), User(Id, Name, Email)"
+    ]
+  }
+]
