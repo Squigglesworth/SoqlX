@@ -51,6 +51,13 @@ reject, so from the command line pass the override:
     xcodebuild -workspace AppExplorer.xcworkspace -scheme SoqlXplorer build CODE_SIGN_IDENTITY=- MACOSX_DEPLOYMENT_TARGET=12.0
 ```
 
+To build, re-sign and launch the Debug app in one step (the re-sign is needed because the
+prebuilt Sparkle framework's signature doesn't match an ad hoc signed app):
+
+```bash
+    scripts/run-debug.sh
+```
+
 Building the SoqlXplorer target will build the dependencies, then SoqlX. You may find that the first
 build of Fragaria fails with a "Command PhaseScriptExecution failed" error, just hit build again, and
 this error goes away.
