@@ -58,6 +58,18 @@ prebuilt Sparkle framework's signature doesn't match an ad hoc signed app):
     scripts/run-debug.sh
 ```
 
+## Logging in when OAuth is blocked
+
+Since September 2025 Salesforce blocks connected apps that haven't been installed in the org, which
+includes the one SoqlX logs in with, so the OAuth login can fail with `OAUTH_APPROVAL_ERROR_GENERIC`.
+Either grant your user the *Approve Uninstalled Connected Apps* permission, or log in with the
+[Salesforce CLI](https://developer.salesforce.com/tools/salesforcecli) and hand its session to SoqlX:
+
+```bash
+    sf org login web -a myorg
+    scripts/open-with-sf.sh myorg
+```
+
 Building the SoqlXplorer target will build the dependencies, then SoqlX. You may find that the first
 build of Fragaria fails with a "Command PhaseScriptExecution failed" error, just hit build again, and
 this error goes away.
