@@ -132,7 +132,7 @@
     // Diagnostics for the width assertions below, which started failing on macOS 27.
     NSLog(@"QRT-DIAG intercellSpacing=%@ effectiveStyle=%ld rowSizeStyle=%ld cellFont=%@",
           NSStringFromSize(tv.intercellSpacing), (long)tv.effectiveStyle, (long)tv.rowSizeStyle,
-          [[NSTableColumn alloc] init].dataCell.font);
+          [(NSCell *)[[NSTableColumn alloc] init].dataCell font]);
     for (NSTableColumn *c in tv.tableColumns) {
         NSLog(@"QRT-DIAG column %@ width=%f min=%f hidden=%d", c.identifier, c.width, c.minWidth, c.isHidden);
     }
