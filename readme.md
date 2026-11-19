@@ -42,7 +42,14 @@ this repo. Fragaria is pulled in via git submodules, so you need to clone this r
 ```
 
 Now you can open the project in XCode, remember to open the workspace created by Cocoa Pods.
-It requires XCode 12.2.
+It requires a current Xcode and targets macOS 12 or later.
+
+The Fragaria submodule still declares a 10.10 deployment target, which recent Xcode versions
+reject, so from the command line pass the override:
+
+```bash
+    xcodebuild -workspace AppExplorer.xcworkspace -scheme SoqlXplorer build CODE_SIGN_IDENTITY=- MACOSX_DEPLOYMENT_TARGET=12.0
+```
 
 Building the SoqlXplorer target will build the dependencies, then SoqlX. You may find that the first
 build of Fragaria fails with a "Command PhaseScriptExecution failed" error, just hit build again, and
