@@ -40,7 +40,7 @@
 @class ShellView;
 @class OrgInfo;
 
-@interface Explorer : NSObject<EditableQueryResultWrapperDelegate, NSWindowDelegate, NSTabViewDelegate, QueryTextListViewDelegate, ZKLoginControllerDelegate, ZKBaseClientDelegate, DescriberDelegate>
+@interface Explorer : NSObject<EditableQueryResultWrapperDelegate, NSWindowDelegate, NSTabViewDelegate, QueryTextListViewDelegate, ZKLoginControllerDelegate, ZKBaseClientDelegate, DescriberDelegate, NSToolbarDelegate>
 {
     // old world order, needs modernizing
     IBOutlet NSOutlineView          *describeList;

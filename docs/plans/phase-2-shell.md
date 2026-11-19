@@ -10,6 +10,11 @@ is built in code and the existing content view is re-parented inside it. Outlets
 tokenizer are untouched. Layout inside the old content view keeps working because its subviews
 resize relative to it.
 
+Revision after review: the title bar row is a unified `NSToolbar` (product name, Recent/Details,
+OrgChip as toolbar item views) rather than a custom 44pt view, because with a full-size content view
+macOS draws the window tab bar over custom chrome, and a toolbar gets dragging, sheets and tabs right
+for free. The ShellView therefore holds only rail | content | inspector and paints the status band.
+
 ```
 window.contentView = ShellView
   ┌ title bar (44pt, full-size content view, traffic lights inset) ──────────────────────┐

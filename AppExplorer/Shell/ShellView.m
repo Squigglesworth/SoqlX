@@ -24,24 +24,9 @@
 
 static const CGFloat kRailWidth = 64.0;
 static const CGFloat kInspectorHeaderHeight = 28.0;
-static const CGFloat kProductNameLeading = 78.0;   // clears the traffic lights
+static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom status strip
 
-// Title bar background: ground fill with a 1pt line along the bottom edge.
-@interface ShellTitleBarView : NSView
-@end
-
-@implementation ShellTitleBarView
--(void)drawRect:(NSRect)dirtyRect {
-    [self.effectiveAppearance performAsCurrentDrawingAppearance:^{
-        [[SXTokens ground] setFill];
-        NSRectFill(self.bounds);
-        [[SXTokens line] setFill];
-        NSRectFill(NSMakeRect(0, 0, NSWidth(self.bounds), 1.0));
-    }];
-}
-@end
-
-// Inspector column background: surface fill with a 1pt line along the leading (left) edge.
+// The inspector column: surface fill with a hairline on its left edge.
 @interface ShellInspectorColumnView : NSView
 @end
 
@@ -57,10 +42,11 @@ static const CGFloat kProductNameLeading = 78.0;   // clears the traffic lights
 @end
 
 @interface ShellView ()
-@property (strong) NavRailView *rail;
-@property (strong) OrgChipView *orgChip;
+@property (strong) NSTextField *productLabel;
 @property (strong) NSButton *recentToggle;
 @property (strong) NSButton *detailsToggle;
+@property (strong) OrgChipView *orgChip;
+@property (strong) NavRailView *rail;
 @property (strong) NSView *inspectorContainer;
 @property (strong) NSTextField *inspectorTitle;
 @property (strong) NSLayoutConstraint *inspectorWidthConstraint;
@@ -70,21 +56,21 @@ static const CGFloat kProductNameLeading = 78.0;   // clears the traffic lights
     BOOL _inspectorVisible;
 }
 
--(NSButton *)titleButtonWithTitle:(NSString *)title imageName:(NSString *)imageName {
+-(NSButton *)toolbarButtonWithTitle:(NSString *)title imageName:(NSString *)imageName {
     NSButton *b = [NSButton buttonWithTitle:title target:nil action:nil];
-    b.translatesAutoresizingMaskIntoConstraints = NO;
+    [b setButtonType:NSButtonTypeMomentaryChange];
     b.bordered = NO;
     b.font = [SXTokens body];
     b.imagePosition = NSImageLeading;
     b.contentTintColor = [SXTokens inkMuted];
-    [b setButtonType:NSButtonTypePushOnPushOff];
     NSImage *img = [NSImage imageNamed:imageName];
-    if (img) {
+    if (img != nil) {
         img.template = YES;
         b.image = img;
     } else {
         b.imagePosition = NSNoImage;
     }
+    [b sizeToFit];
     return b;
 }
 
@@ -95,24 +81,15 @@ static const CGFloat kProductNameLeading = 78.0;   // clears the traffic lights
     // translating its autoresizing mask (the subviews below are constraint-based).
     self.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 
-    // Title bar.
-    ShellTitleBarView *titleBar = [[ShellTitleBarView alloc] initWithFrame:NSZeroRect];
-    titleBar.translatesAutoresizingMaskIntoConstraints = NO;
-    [self addSubview:titleBar];
-
-    NSTextField *product = [NSTextField labelWithString:@"SoqlX Rebooted"];
-    product.translatesAutoresizingMaskIntoConstraints = NO;
-    product.font = [SXTokens bodyStrong];
-    product.textColor = [SXTokens ink];
-    [titleBar addSubview:product];
-
-    _recentToggle = [self titleButtonWithTitle:@"Recent" imageName:@"icon.history"];
-    _detailsToggle = [self titleButtonWithTitle:@"Details" imageName:@"icon.panel-right"];
-    [titleBar addSubview:_recentToggle];
-    [titleBar addSubview:_detailsToggle];
-
-    _orgChip = [[OrgChipView alloc] initWithFrame:NSZeroRect];
-    [titleBar addSubview:_orgChip];
+    // Toolbar views. They are owned here but hosted by the window's NSToolbar.
+    _productLabel = [NSTextField labelWithString:@"SoqlX Rebooted"];
+    _productLabel.font = [SXTokens bodyStrong];
+    _productLabel.textColor = [SXTokens ink];
+    [_productLabel sizeToFit];
+    _recentToggle = [self toolbarButtonWithTitle:@"Recent" imageName:@"icon.history"];
+    _detailsToggle = [self toolbarButtonWithTitle:@"Details" imageName:@"icon.panel-right"];
+    _orgChip = [[OrgChipView alloc] initWithFrame:NSMakeRect(0, 0, 120, SXControlSM)];
+    _orgChip.translatesAutoresizingMaskIntoConstraints = YES;   // sized by the toolbar from intrinsicContentSize
 
     // Rail.
     _rail = [[NavRailView alloc] initWithFrame:NSZeroRect];
@@ -149,41 +126,23 @@ static const CGFloat kProductNameLeading = 78.0;   // clears the traffic lights
     _inspectorContainer.translatesAutoresizingMaskIntoConstraints = NO;
     [inner addSubview:_inspectorContainer];
 
-    // Constraints.
     _inspectorWidthConstraint = [column.widthAnchor constraintEqualToConstant:0];
 
     [NSLayoutConstraint activateConstraints:@[
-        // Title bar across the top.
-        [titleBar.topAnchor constraintEqualToAnchor:self.topAnchor],
-        [titleBar.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
-        [titleBar.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
-        [titleBar.heightAnchor constraintEqualToConstant:SXTitlebarHeight],
-
-        [product.leadingAnchor constraintEqualToAnchor:titleBar.leadingAnchor constant:kProductNameLeading],
-        [product.centerYAnchor constraintEqualToAnchor:titleBar.centerYAnchor],
-        [_recentToggle.leadingAnchor constraintEqualToAnchor:product.trailingAnchor constant:SXSpace5],
-        [_recentToggle.centerYAnchor constraintEqualToAnchor:titleBar.centerYAnchor],
-        [_detailsToggle.leadingAnchor constraintEqualToAnchor:_recentToggle.trailingAnchor constant:SXSpace2],
-        [_detailsToggle.centerYAnchor constraintEqualToAnchor:titleBar.centerYAnchor],
-        [_orgChip.trailingAnchor constraintEqualToAnchor:titleBar.trailingAnchor constant:-SXSpace3],
-        [_orgChip.centerYAnchor constraintEqualToAnchor:titleBar.centerYAnchor],
-        [_orgChip.heightAnchor constraintEqualToConstant:SXControlSM],
-        [_orgChip.leadingAnchor constraintGreaterThanOrEqualToAnchor:_detailsToggle.trailingAnchor constant:SXSpace3],
-
-        // Rail.
-        [_rail.topAnchor constraintEqualToAnchor:titleBar.bottomAnchor],
+        // Rail down the left edge.
+        [_rail.topAnchor constraintEqualToAnchor:self.topAnchor],
         [_rail.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
         [_rail.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
         [_rail.widthAnchor constraintEqualToConstant:kRailWidth],
 
         // Content fills the middle.
-        [content.topAnchor constraintEqualToAnchor:titleBar.bottomAnchor],
+        [content.topAnchor constraintEqualToAnchor:self.topAnchor],
         [content.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
         [content.leadingAnchor constraintEqualToAnchor:_rail.trailingAnchor],
         [content.trailingAnchor constraintEqualToAnchor:column.leadingAnchor],
 
-        // Inspector column.
-        [column.topAnchor constraintEqualToAnchor:titleBar.bottomAnchor],
+        // Inspector column on the right.
+        [column.topAnchor constraintEqualToAnchor:self.topAnchor],
         [column.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
         [column.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
         _inspectorWidthConstraint,
@@ -211,8 +170,6 @@ static const CGFloat kProductNameLeading = 78.0;   // clears the traffic lights
     return self;
 }
 
-// MARK: Inspector
-
 -(BOOL)inspectorVisible { return _inspectorVisible; }
 
 -(void)setInspectorVisible:(BOOL)visible {
@@ -234,12 +191,15 @@ static const CGFloat kProductNameLeading = 78.0;   // clears the traffic lights
     } completionHandler:nil];
 }
 
-// MARK: Drawing
-
 -(void)drawRect:(NSRect)dirtyRect {
     [self.effectiveAppearance performAsCurrentDrawingAppearance:^{
         [[SXTokens ground] setFill];
         NSRectFill(self.bounds);
+        // Status band along the bottom, under the nib's status text and API meter.
+        [[SXTokens surfaceSunken] setFill];
+        NSRectFill(NSMakeRect(0, 0, NSWidth(self.bounds), kStatusBarHeight));
+        [[SXTokens line] setFill];
+        NSRectFill(NSMakeRect(0, kStatusBarHeight, NSWidth(self.bounds), 1.0));
     }];
 }
 

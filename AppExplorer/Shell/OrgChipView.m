@@ -36,6 +36,7 @@ static const CGFloat kMarkSize = 10.0;
 }
 
 -(BOOL)acceptsFirstMouse:(NSEvent *)event { return YES; }
+-(BOOL)mouseDownCanMoveWindow { return NO; }
 
 // MARK: Setters
 

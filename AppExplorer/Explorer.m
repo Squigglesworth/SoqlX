@@ -642,12 +642,15 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 
 -(NSString *)titleUserInfo {
     NSString *doc = @"SoqlX Rebooted";
+    BOOL hasFile = NO;
     if ([self.selectedTabViewIdentifier isEqualToString:soqlTabId] && self.queryFilename != nil) {
         doc = self.queryFilename.lastPathComponent;
         doc = [doc substringToIndex:doc.length - self.queryFilename.pathExtension.length - 1];
+        hasFile = YES;
     } else if ([self.selectedTabViewIdentifier isEqualToString:apexTabId] && self.apexFilename != nil) {
         doc = self.apexFilename.lastPathComponent;
         doc = [doc substringToIndex:doc.length - self.apexFilename.pathExtension.length - 1];
+        hasFile = YES;
     }
     if (self.sforce == nil) {
         return doc;
@@ -660,7 +663,6 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     } else {
         org = [sforce cachedUserInfo].organizationName ?: [sforce serverHostAbbriviation];
     }
-    BOOL hasFile = ![doc isEqualToString:@"SoqlX Rebooted"];
     return hasFile ? [NSString stringWithFormat:@"%@ \u00b7 %@", org, doc] : org;
 }
 
@@ -675,8 +677,21 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     myWindow.contentView = [[NSView alloc] initWithFrame:content.frame];
     ShellView *shell = [[ShellView alloc] initWithContentView:content];
     myWindow.contentView = shell;
+    // The shell draws its own status band; the window's content borders are no longer needed.
     [myWindow setContentBorderThickness:0 forEdge:NSMaxYEdge];
+    [myWindow setContentBorderThickness:0 forEdge:NSMinYEdge];
     myWindow.backgroundColor = [SXTokens ground];
+    self.shell = shell;
+
+    // Product name, panel toggles and the org chip live in a unified toolbar, so window tabs
+    // and sheets attach below them and the title bar drags and zooms as usual.
+    NSToolbar *toolbar = [[NSToolbar alloc] initWithIdentifier:@"SoqlXShellToolbar"];
+    toolbar.delegate = self;
+    toolbar.displayMode = NSToolbarDisplayModeIconOnly;
+    toolbar.allowsUserCustomization = NO;
+    toolbar.showsBaselineSeparator = NO;
+    myWindow.toolbar = toolbar;
+    myWindow.toolbarStyle = NSWindowToolbarStyleUnified;
 
     // The rail replaces the segmented view switcher; the title bar toggles replace the Details/Recent one.
     self.soqlSchemaApexSelector.hidden = YES;
@@ -697,9 +712,46 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     shell.detailsToggle.action = @selector(toggleInspector:);
 
     [detailsController dockInInspector:shell];
-    self.shell = shell;
     [self updatePanelToggles];
     [self updateOrgChip];
+}
+
+// MARK: NSToolbarDelegate
+
+static NSString *const ShellItemProduct = @"sx.product";
+static NSString *const ShellItemRecent  = @"sx.recent";
+static NSString *const ShellItemDetails = @"sx.details";
+static NSString *const ShellItemOrgChip = @"sx.orgchip";
+
+- (NSArray<NSToolbarItemIdentifier> *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar {
+    return @[ShellItemProduct, NSToolbarFlexibleSpaceItemIdentifier, ShellItemRecent, ShellItemDetails,
+             NSToolbarFlexibleSpaceItemIdentifier, ShellItemOrgChip];
+}
+
+- (NSArray<NSToolbarItemIdentifier> *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar {
+    return [self toolbarDefaultItemIdentifiers:toolbar];
+}
+
+- (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSToolbarItemIdentifier)identifier willBeInsertedIntoToolbar:(BOOL)flag {
+    NSView *view = nil;
+    NSString *label = @"";
+    if ([identifier isEqualToString:ShellItemProduct]) {
+        view = self.shell.productLabel;  label = @"SoqlX Rebooted";
+    } else if ([identifier isEqualToString:ShellItemRecent]) {
+        view = self.shell.recentToggle;  label = @"Recent";
+    } else if ([identifier isEqualToString:ShellItemDetails]) {
+        view = self.shell.detailsToggle; label = @"Details";
+    } else if ([identifier isEqualToString:ShellItemOrgChip]) {
+        view = self.shell.orgChip;       label = @"Org";
+    } else {
+        return nil;
+    }
+    NSToolbarItem *item = [[NSToolbarItem alloc] initWithItemIdentifier:identifier];
+    item.view = view;
+    item.label = label;
+    item.paletteLabel = label;
+    item.visibilityPriority = [identifier isEqualToString:ShellItemOrgChip] ? NSToolbarItemVisibilityPriorityHigh : NSToolbarItemVisibilityPriorityStandard;
+    return item;
 }
 
 - (NSInteger)railTagForTabIdentifier:(NSString *)identifier {
@@ -732,11 +784,18 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 
 - (void)updatePanelToggles {
     if (self.shell == nil) return;
-    self.shell.detailsToggle.contentTintColor = detailsController.windowVisible ? [SXTokens accentInk] : [SXTokens inkMuted];
-    self.shell.recentToggle.contentTintColor = queryListController.windowVisible ? [SXTokens accentInk] : [SXTokens inkMuted];
+    BOOL details = detailsController.windowVisible;
+    BOOL recent = queryListController.windowVisible;
+    self.shell.detailsToggle.contentTintColor = details ? [SXTokens accentInk] : [SXTokens inkMuted];
+    self.shell.recentToggle.contentTintColor = recent ? [SXTokens accentInk] : [SXTokens inkMuted];
+    self.shell.detailsToggle.state = details ? NSControlStateValueOn : NSControlStateValueOff;
+    self.shell.recentToggle.state = recent ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)loadOrgInfo {
+    // Clear any previous org's identity first so a re-login never shows the wrong org (or kind).
+    self.orgInfo = nil;
+    [self updateOrgChip];
     NSString *q = @"SELECT Id, Name, IsSandbox, OrganizationType, TrialExpirationDate FROM Organization";
     [sforce query:q failBlock:^(NSError *err) {
         NSLog(@"Unable to read the Organization record: %@", err);
@@ -768,6 +827,9 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     chip.detail = self.orgInfo.instanceHost;
     chip.color = [settings color];
     chip.hidden = NO;
+    // The toolbar sizes the item from the view's frame, so keep it in step with the content.
+    NSSize sz = chip.intrinsicContentSize;
+    chip.frame = NSMakeRect(chip.frame.origin.x, chip.frame.origin.y, sz.width, sz.height);
 }
 
 // MARK:- File load/save

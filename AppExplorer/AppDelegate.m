@@ -411,7 +411,6 @@
     NSWindow *w = self.window;
     w.titleVisibility = NSWindowTitleHidden;
     w.titlebarAppearsTransparent = YES;
-    w.styleMask |= NSWindowStyleMaskFullSizeContentView;
     w.tabbingMode = NSWindowTabbingModePreferred;
     w.tabbingIdentifier = @"SoqlXRebootedOrg";
     [self.explorer installShell];

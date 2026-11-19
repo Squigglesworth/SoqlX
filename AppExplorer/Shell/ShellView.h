@@ -25,20 +25,27 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// The window's content view: title bar, nav rail, the old content view, and a collapsible inspector column.
+// The design system's window layout, built around the nib's existing content view:
+//
+//   [ rail | content (sidebar + work area) | inspector ]
+//
+// The title bar row (product name, Recent/Details toggles, OrgChip) is NOT part of this view:
+// those controls are created here and handed to the window's unified NSToolbar by the
+// Explorer, so that window tabs and sheets sit below them the way macOS expects.
 @interface ShellView : NSView
 
-// Re-parents `content` into the middle area and sets up Auto Layout.
--(instancetype)initWithContentView:(NSView *)content;
+-(instancetype)initWithContentView:(NSView *)content;   // re-parents content; sets up Auto Layout
+
+// Views for the window toolbar (not subviews of the shell).
+@property (readonly, strong) NSTextField *productLabel;  // "SoqlX Rebooted"
+@property (readonly, strong) NSButton *recentToggle;     // template "history" icon + "Recent"
+@property (readonly, strong) NSButton *detailsToggle;    // template "panel-right" icon + "Details"
+@property (readonly, strong) OrgChipView *orgChip;
 
 @property (readonly, strong) NavRailView *rail;
-@property (readonly, strong) OrgChipView *orgChip;
-@property (readonly, strong) NSButton *recentToggle;       // title bar, "Recent"
-@property (readonly, strong) NSButton *detailsToggle;      // title bar, "Details"
-@property (readonly, strong) NSView *inspectorContainer;   // host for the inspector's content; clipped away when hidden
-@property (readonly, strong) NSTextField *inspectorTitle;  // header above the container
-
-@property (assign, nonatomic) BOOL inspectorVisible;       // no animation
+@property (readonly, strong) NSView *inspectorContainer; // fill this with the inspector content
+@property (readonly, strong) NSTextField *inspectorTitle;
+@property (assign, nonatomic) BOOL inspectorVisible;
 -(void)setInspectorVisible:(BOOL)visible animated:(BOOL)animated;
 
 @end
