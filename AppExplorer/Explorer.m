@@ -696,6 +696,9 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     // The rail replaces the segmented view switcher; the title bar toggles replace the Details/Recent one.
     self.soqlSchemaApexSelector.hidden = YES;
     self.detailsRecentSelector.hidden = YES;
+    // The "SObjects" column header sat under the old top content border; without that border the
+    // search field overlaps it, and the design system has no header above the tree anyway.
+    describeList.headerView = nil;
 
     NavRailView *rail = shell.rail;
     [rail addItemWithTitle:@"Query"    image:[NSImage imageNamed:@"icon.query"]    tag:0 pinToBottom:NO];
