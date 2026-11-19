@@ -16,11 +16,5 @@ fi
 xcodebuild -workspace AppExplorer.xcworkspace -scheme SoqlXplorer -configuration Debug build \
     CODE_SIGN_IDENTITY=- MACOSX_DEPLOYMENT_TARGET=12.0 2>&1 | grep -E "error:|BUILD" || true
 
-APP="$(xcodebuild -workspace AppExplorer.xcworkspace -scheme SoqlXplorer -configuration Debug -showBuildSettings 2>/dev/null \
-      | awk '/ BUILT_PRODUCTS_DIR =/ {print $3}')/SoqlXplorer.app"
-if [ ! -d "$APP" ]; then
-    echo "Build product not found at $APP" >&2
-    exit 1
-fi
-codesign --force --deep --sign - "$APP"
+APP="$(scripts/resign-debug.sh)"
 open "$APP"

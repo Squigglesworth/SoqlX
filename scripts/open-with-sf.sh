@@ -56,4 +56,9 @@ if [ -z "${HOST:-}" ] || [ -z "${TOKEN:-}" ]; then
     echo "Couldn't get a session for $1 from the Salesforce CLI" >&2
     exit 1
 fi
+# A fresh build (including a test run) leaves the Debug app unable to launch until
+# it is re-signed, so do that first if there is a Debug build around.
+if [ -f "$(dirname "$0")/resign-debug.sh" ]; then
+    "$(dirname "$0")/resign-debug.sh" >/dev/null || true
+fi
 open "soqlx://${HOST}/sid/${TOKEN}"
