@@ -21,6 +21,7 @@
 
 #import <XCTest/XCTest.h>
 #import "QueryResultTable.h"
+#import "ZKQueryResult+Display.h"
 
 @interface QueryResultTableTest : XCTestCase
 @end
@@ -127,7 +128,17 @@
     XCTAssertNotNil(xml);
     ZKQueryResult *qr = [[ZKQueryResult alloc] initWithXmlElement:xml];
     t.queryResult = qr;
-    
+
+    // Diagnostics for the width assertions below, which started failing on macOS 27.
+    NSLog(@"QRT-DIAG intercellSpacing=%@ effectiveStyle=%ld rowSizeStyle=%ld cellFont=%@",
+          NSStringFromSize(tv.intercellSpacing), (long)tv.effectiveStyle, (long)tv.rowSizeStyle,
+          [[NSTableColumn alloc] init].dataCell.font);
+    for (NSTableColumn *c in tv.tableColumns) {
+        NSLog(@"QRT-DIAG column %@ width=%f min=%f hidden=%d", c.identifier, c.width, c.minWidth, c.isHidden);
+    }
+    NSLog(@"QRT-DIAG contacts row0=%@ row1=%@",
+          [qr columnPathDisplayValue:@[@"contacts"] atRow:0], [qr columnPathDisplayValue:@[@"contacts"] atRow:1]);
+
     XCTAssertEqual(4, tv.tableColumns.count);
     XCTAssertEqualObjects(DELETE_COLUMN_IDENTIFIER, tv.tableColumns[0].identifier);
     XCTAssertEqualObjects(ERROR_COLUMN_IDENTIFIER, tv.tableColumns[1].identifier);
