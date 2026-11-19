@@ -61,6 +61,10 @@
 
 -(void)setSforceClient:(ZKSforceClient *)client;
 
+// Asked before running anonymous Apex. Return a sentence to block the run (shown in an alert),
+// or nil to allow it. Used to enforce the per-org read-only setting.
+@property (copy) NSString *(^executionBlockedReason)(void);
+
 @property (strong) IBOutlet MGSFragariaView *apexTextField;
 @property (strong) NSString *apex;
 

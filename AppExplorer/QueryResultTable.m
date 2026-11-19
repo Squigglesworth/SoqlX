@@ -27,6 +27,8 @@
 #import "SObjectSortDescriptor.h"
 #import "TStamp.h"
 #import "ZKQueryResult+Display.h"
+#import "ResultTextCell.h"
+#import "DesignTokens.h"
 
 
 const NSInteger MIN_WIDTH = 40;
@@ -121,11 +123,20 @@ const NSInteger DEF_ID_WIDTH = 165;
 - (instancetype)initForTableView:(NSTableView *)view {
     self = [super init];
     table = view;
+    if (table != nil) {
+        table.usesAlternatingRowBackgroundColors = NO;
+        table.gridStyleMask = NSTableViewGridNone;
+        table.rowHeight = SXRowCompact;
+        table.backgroundColor = [SXTokens surface];
+        table.intercellSpacing = NSMakeSize(3, 0);
+        table.selectionHighlightStyle = NSTableViewSelectionHighlightStyleRegular;
+    }
     return self;
 }
 
 - (void)dealloc {
     [wrapper removeObserver:self forKeyPath:@"hasCheckedRows"];
+    [wrapper removeObserver:self forKeyPath:@"checkedRowCount"];
 }
 
 - (ZKQueryResult *)queryResult {
@@ -140,10 +151,21 @@ const NSInteger DEF_ID_WIDTH = 165;
     return [wrapper hasCheckedRows];
 }
 
+-(NSUInteger)checkedRowCount {
+    return [wrapper checkedRowCount];
+}
+
+-(void)setInstanceHost:(NSString *)host {
+    _instanceHost = [host copy];
+    wrapper.instanceHost = _instanceHost;
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if (object == wrapper) {
         [self willChangeValueForKey:@"hasCheckedRows"];
         [self didChangeValueForKey:@"hasCheckedRows"];
+        [self willChangeValueForKey:@"checkedRowCount"];
+        [self didChangeValueForKey:@"checkedRowCount"];
     }
 }
 
@@ -151,6 +173,8 @@ const NSInteger DEF_ID_WIDTH = 165;
     [wrapper setDelegate:delegate];
     table.delegate = wrapper;
     table.dataSource = wrapper;
+    table.target = wrapper;
+    table.action = @selector(tableClicked:);
     [self showHideErrorColumn];
 }
 
@@ -164,10 +188,15 @@ const NSInteger DEF_ID_WIDTH = 165;
 - (void)setQueryResult:(ZKQueryResult *)qr {
     if (qr == wrapper.queryResult) return;
     [wrapper removeObserver:self forKeyPath:@"hasCheckedRows"];
+    [wrapper removeObserver:self forKeyPath:@"checkedRowCount"];
     [self willChangeValueForKey:@"hasCheckedRows"];
+    [self willChangeValueForKey:@"checkedRowCount"];
     wrapper = [[EditableQueryResultWrapper alloc] initWithQueryResult:qr];
+    wrapper.instanceHost = self.instanceHost;
+    [self didChangeValueForKey:@"checkedRowCount"];
     [self didChangeValueForKey:@"hasCheckedRows"];
     [wrapper addObserver:self forKeyPath:@"hasCheckedRows" options:0 context:nil];
+    [wrapper addObserver:self forKeyPath:@"checkedRowCount" options:0 context:nil];
 
     [table tableColumnWithIdentifier:ERROR_COLUMN_IDENTIFIER].hidden = TRUE;
     NSArray<NSString*>* cols = [self createTableColumns:qr];
@@ -260,6 +289,9 @@ const NSInteger DEF_ID_WIDTH = 165;
     c.identifier = identifier;
     c.title = label;
     c.editable = YES;
+    ResultTextCell *cell = [[ResultTextCell alloc] initTextCell:@""];
+    [cell setEditable:YES];
+    c.dataCell = cell;
     c.minWidth = MIN_WIDTH;
     c.width = width;
     c.resizingMask = NSTableColumnUserResizingMask | NSTableColumnAutoresizingMask;

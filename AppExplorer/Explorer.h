@@ -39,6 +39,7 @@
 @class ZKTextView;
 @class ShellView;
 @class OrgInfo;
+@class EmptyStateView;
 
 @interface Explorer : NSObject<EditableQueryResultWrapperDelegate, NSWindowDelegate, NSTabViewDelegate, QueryTextListViewDelegate, ZKLoginControllerDelegate, ZKBaseClientDelegate, DescriberDelegate, NSToolbarDelegate>
 {
@@ -98,6 +99,15 @@
 @property (strong) ShellView *shell;
 // What the org told us at login (nil until the Organization query completes).
 @property (strong) OrgInfo *orgInfo;
+
+// Run honours this ("Include deleted and archived"), going through queryAll when set.
+@property (assign) BOOL includeDeleted;
+// Per-org safety, from OrgSettings for the current org. Deletes are allowed when the org isn't
+// known yet (same as before); read-only blocks in-grid edits and anonymous Apex too.
+@property (readonly) BOOL deletesAllowed;
+@property (readonly) BOOL writesAllowed;
+// "Delete 3 records", for the results footer.
+@property (readonly) NSString *deleteButtonTitle;
 
 // If not nil the soql query is asocicated with a file. i.e. it was loaded from, or saved to.
 @property (strong) NSURL *queryFilename;

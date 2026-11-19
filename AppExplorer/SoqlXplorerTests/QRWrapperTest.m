@@ -23,6 +23,17 @@
 #import "EditableQueryResultWrapper.h"
 #import "SObject.h"
 
+// Minimal delegate for allowsEditing tests.
+@interface StubEditDelegate : NSObject<EditableQueryResultWrapperDelegate>
+@property BOOL editingAllowed;
+@end
+
+@implementation StubEditDelegate
+-(void)dataChangedOnObject:(ZKSObject *)sobject field:(NSString *)fieldName value:(id)value {}
+-(BOOL)isEditing { return NO; }
+-(BOOL)allowsEditing { return self.editingAllowed; }
+@end
+
 @interface QRWrapperTest : XCTestCase
 @property EditableQueryResultWrapper *w;
 @end
@@ -109,6 +120,27 @@
     [parent setFieldValue:addr field:@"BillingAddress"];
     XCTAssertEqualObjects(@"CA", [self.w tableView:t objectValueForTableColumn:addrCol row:2]);
     XCTAssertNil([self.w tableView:t objectValueForTableColumn:addrCol row:0]);
+}
+
+-(void)testCheckedRowCount {
+    XCTAssertEqual(0, self.w.checkedRowCount);
+    self.w.editable = YES;
+    NSTableView *t = [[NSTableView alloc] init];
+    [self.w tableView:t didClickTableColumn:[[NSTableColumn alloc] initWithIdentifier:DELETE_COLUMN_IDENTIFIER]];
+    XCTAssertEqual(3, self.w.checkedRowCount);
+    [self.w.queryResult.records[0] setChecked:NO];
+    XCTAssertEqual(2, self.w.checkedRowCount);
+}
+
+-(void)testAllowsEditingBlocksEdit {
+    self.w.editable = YES;
+    NSTableColumn *name = [[NSTableColumn alloc] initWithIdentifier:@"Name"];
+    StubEditDelegate *d = [[StubEditDelegate alloc] init];
+    self.w.delegate = d;
+    d.editingAllowed = YES;
+    XCTAssertTrue([self.w allowEdit:name]);
+    d.editingAllowed = NO;
+    XCTAssertFalse([self.w allowEdit:name]);
 }
 
 @end

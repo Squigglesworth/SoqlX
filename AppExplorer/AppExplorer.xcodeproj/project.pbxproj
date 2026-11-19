@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F6000000000082 /* SXControls.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000081 /* SXControls.m */; };
+		A1B2C3D4E5F6000000000086 /* EmptyStateView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000085 /* EmptyStateView.m */; };
+		A1B2C3D4E5F600000000008A /* ConfirmDeleteDialog.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000089 /* ConfirmDeleteDialog.m */; };
+		A1B2C3D4E5F600000000008B /* ConfirmDeleteDialog.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000089 /* ConfirmDeleteDialog.m */; };
+		A1B2C3D4E5F600000000008E /* SalesforceIds.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000008D /* SalesforceIds.m */; };
+		A1B2C3D4E5F600000000008F /* SalesforceIds.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F600000000008D /* SalesforceIds.m */; };
+		A1B2C3D4E5F6000000000092 /* ResultTextCell.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000091 /* ResultTextCell.m */; };
+		A1B2C3D4E5F6000000000093 /* ResultTextCell.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000091 /* ResultTextCell.m */; };
+		A1B2C3D4E5F6000000000095 /* ConfirmDeleteDialogTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000094 /* ConfirmDeleteDialogTests.m */; };
+		A1B2C3D4E5F6000000000097 /* SalesforceIdsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000096 /* SalesforceIdsTests.m */; };
 		A1B2C3D4E5F6000000000D63 /* NavRailView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D62 /* NavRailView.m */; };
 		A1B2C3D4E5F6000000000D66 /* OrgChipView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D65 /* OrgChipView.m */; };
 		A1B2C3D4E5F6000000000D69 /* ShellView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D68 /* ShellView.m */; };
@@ -268,6 +278,18 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4E5F6000000000080 /* SXControls.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SXControls.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000081 /* SXControls.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SXControls.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000084 /* EmptyStateView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EmptyStateView.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000085 /* EmptyStateView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EmptyStateView.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000088 /* ConfirmDeleteDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConfirmDeleteDialog.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000089 /* ConfirmDeleteDialog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ConfirmDeleteDialog.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000008C /* SalesforceIds.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SalesforceIds.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F600000000008D /* SalesforceIds.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SalesforceIds.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000090 /* ResultTextCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ResultTextCell.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000091 /* ResultTextCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ResultTextCell.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000094 /* ConfirmDeleteDialogTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ConfirmDeleteDialogTests.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000096 /* SalesforceIdsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SalesforceIdsTests.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D61 /* NavRailView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NavRailView.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D62 /* NavRailView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NavRailView.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D64 /* OrgChipView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OrgChipView.h; sourceTree = "<group>"; };
@@ -525,6 +547,12 @@
 				A1B2C3D4E5F6000000000D65 /* OrgChipView.m */,
 				A1B2C3D4E5F6000000000D67 /* ShellView.h */,
 				A1B2C3D4E5F6000000000D68 /* ShellView.m */,
+				A1B2C3D4E5F6000000000080 /* SXControls.h */,
+				A1B2C3D4E5F6000000000081 /* SXControls.m */,
+				A1B2C3D4E5F6000000000084 /* EmptyStateView.h */,
+				A1B2C3D4E5F6000000000085 /* EmptyStateView.m */,
+				A1B2C3D4E5F6000000000088 /* ConfirmDeleteDialog.h */,
+				A1B2C3D4E5F6000000000089 /* ConfirmDeleteDialog.m */,
 			);
 			path = Shell;
 			sourceTree = "<group>";
@@ -571,6 +599,10 @@
 				A1B2C3D4E5F6000000000D52 /* DesignTokens.m */,
 				A1B2C3D4E5F6000000000D71 /* OrgSettings.h */,
 				A1B2C3D4E5F6000000000D72 /* OrgSettings.m */,
+				A1B2C3D4E5F600000000008C /* SalesforceIds.h */,
+				A1B2C3D4E5F600000000008D /* SalesforceIds.m */,
+				A1B2C3D4E5F6000000000090 /* ResultTextCell.h */,
+				A1B2C3D4E5F6000000000091 /* ResultTextCell.m */,
 				A1B2C3D4E5F6000000000D60 /* Shell */,
 				F494FA3C0F7EFDD2001216EC /* GlossShader */,
 				F4B8AFC518A8540800FE114F /* IconProvider.h */,
@@ -850,6 +882,8 @@
 				F4C889D12624F272006D606A /* SoqlTokenizerTests.m */,
 				A1B2C3D4E5F6000000000D31 /* HelpDocsTests.m */,
 				A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */,
+				A1B2C3D4E5F6000000000094 /* ConfirmDeleteDialogTests.m */,
+				A1B2C3D4E5F6000000000096 /* SalesforceIdsTests.m */,
 				F4394F9B264981C000ABFA2B /* describes.xml */,
 				F4DE4053256205D300FBA200 /* Info.plist */,
 			);
@@ -1244,6 +1278,11 @@
 				A1B2C3D4E5F6000000000D63 /* NavRailView.m in Sources */,
 				A1B2C3D4E5F6000000000D66 /* OrgChipView.m in Sources */,
 				A1B2C3D4E5F6000000000D69 /* ShellView.m in Sources */,
+				A1B2C3D4E5F6000000000082 /* SXControls.m in Sources */,
+				A1B2C3D4E5F6000000000086 /* EmptyStateView.m in Sources */,
+				A1B2C3D4E5F600000000008A /* ConfirmDeleteDialog.m in Sources */,
+				A1B2C3D4E5F600000000008E /* SalesforceIds.m in Sources */,
+				A1B2C3D4E5F6000000000092 /* ResultTextCell.m in Sources */,
 				A1B2C3D4E5F6000000000D13 /* SnippetLibrary.m in Sources */,
 				F4D7831E15D49F7B00D00BB9 /* AppDelegate.m in Sources */,
 				F4D7833415D5F46600D00BB9 /* BaseUserBasedController.m in Sources */,
@@ -1268,6 +1307,11 @@
 				A1B2C3D4E5F6000000000D54 /* DesignTokens.m in Sources */,
 				A1B2C3D4E5F6000000000D74 /* OrgSettings.m in Sources */,
 				A1B2C3D4E5F6000000000D76 /* OrgSettingsTests.m in Sources */,
+				A1B2C3D4E5F600000000008B /* ConfirmDeleteDialog.m in Sources */,
+				A1B2C3D4E5F600000000008F /* SalesforceIds.m in Sources */,
+				A1B2C3D4E5F6000000000093 /* ResultTextCell.m in Sources */,
+				A1B2C3D4E5F6000000000095 /* ConfirmDeleteDialogTests.m in Sources */,
+				A1B2C3D4E5F6000000000097 /* SalesforceIdsTests.m in Sources */,
 				A1B2C3D4E5F6000000000D14 /* SnippetLibrary.m in Sources */,
 				A1B2C3D4E5F6000000000D32 /* HelpDocsTests.m in Sources */,
 				F4408FF02562F4C1005E8BB7 /* QueryColumns.m in Sources */,

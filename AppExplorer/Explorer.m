@@ -42,6 +42,38 @@
 #import "Shell/OrgChipView.h"
 #import "OrgSettings.h"
 #import "DesignTokens.h"
+#import "Shell/SXControls.h"
+#import "Shell/EmptyStateView.h"
+#import "Shell/ConfirmDeleteDialog.h"
+
+static const CGFloat kEditorFooterHeight = 36;
+static const CGFloat kResultsFooterHeight = 32;
+static void *kQueryChromeContext = &kQueryChromeContext;
+
+// A footer band: surface-sunken with a hairline along its top edge.
+@interface SXBandView : NSView
+@end
+@implementation SXBandView
+-(void)drawRect:(NSRect)dirtyRect {
+    [self.effectiveAppearance performAsCurrentDrawingAppearance:^{
+        [[SXTokens surfaceSunken] setFill];
+        NSRectFill(self.bounds);
+        [[SXTokens line] setFill];
+        NSRectFill(NSMakeRect(0, NSHeight(self.bounds) - 1, NSWidth(self.bounds), 1));
+    }];
+}
+@end
+
+@interface Explorer ()
+@property (strong) NSButton *runButton;
+@property (strong) NSButton *includeDeletedCheckbox;
+@property (strong) NSTextField *editorMessage;
+@property (strong) NSButton *queryMoreButton;
+@property (strong) NSButton *deleteButton;
+@property (strong) EmptyStateView *resultsEmptyState;
+@property (copy) NSString *lastQueryTiming;
+@property (assign) BOOL observingDeleteTitle;
+@end
 
 static NSString *soqlTabId = @"soql";
 static NSString *schemaTabId = @"schema";
@@ -83,7 +115,11 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     if ([key isEqualToString:@"titleUserInfo"])
         return [paths setByAddingObjectsFromArray:@[@"sforce", @"queryFilename", @"apexFilename", @"selectedTabViewIdentifier", @"orgInfo"]];
     if ([key isEqualToString:@"hasSelectedForDelete"])
-        return [paths setByAddingObjectsFromArray:@[@"rootResults.hasCheckedRows"]];
+        return [paths setByAddingObjectsFromArray:@[@"rootResults.hasCheckedRows", @"rootResults.checkedRowCount", @"orgInfo"]];
+    if ([key isEqualToString:@"deleteButtonTitle"])
+        return [paths setByAddingObjectsFromArray:@[@"rootResults.checkedRowCount"]];
+    if ([key isEqualToString:@"deletesAllowed"] || [key isEqualToString:@"writesAllowed"])
+        return [paths setByAddingObjectsFromArray:@[@"orgInfo"]];
     return paths;
 }
 
@@ -133,6 +169,9 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:PREF_SOQL_SYNTAX_HIGHLIGHTING];
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:PREF_SOQL_UPPERCASE_KEYWORDS];
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:PREF_SOQL_POPUP_COMPLETIONS];
+    if (self.observingDeleteTitle) {
+        [self removeObserver:self forKeyPath:@"deleteButtonTitle" context:kQueryChromeContext];
+    }
     NSLog(@"Explorer dealloc");
 }
 
@@ -141,9 +180,12 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 }
 
 - (void)changeEditFont:(id)sender; {
-    soql.textStorage.font = [sender convertFont:soql.textStorage.font];
-    [NSFont setUserFixedPitchFont:soql.textStorage.font];
+    NSFont *f = [sender convertFont:self.colorizer.baseFont ?: soql.textStorage.font];
+    soql.textStorage.font = f;
+    self.colorizer.baseFont = f;
+    [NSFont setUserFixedPitchFont:f];
     [apexController changeEditFont:sender];
+    [self colorize];
 }
 
 -(void)updateCallCount:(ZKSforceClient *)c {
@@ -299,6 +341,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [dds addDelegate:dld];
     self.colorizer.describer = dld;
     self.colorizer.view = soql;
+    self.colorizer.baseFont = [(AppDelegate*)[NSApp delegate] editFont];
     soql.textStorage.delegate = self.colorizer;
     soql.delegate = self.colorizer;
     
@@ -505,7 +548,9 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
                                           NSForegroundColorAttributeName: [NSColor textColor]
                                                                          }];
     [soql.textStorage setAttributedString:s];
-    soql.textStorage.font = [(AppDelegate*)[NSApp delegate] editFont];
+    NSFont *f = [(AppDelegate*)[NSApp delegate] editFont];
+    soql.textStorage.font = f;
+    self.colorizer.baseFont = f;
     [self colorize];
 }
 
@@ -569,20 +614,26 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
         [self updateProgress:NO];
         self.isQuerying = NO;
         NSString *time = [self execTimeSince:started];
+        self.lastQueryTiming = time;
         if ([qr size] > 0) {
             if ([qr records].count == 0) {
                 self.statusText = [NSString stringWithFormat:@"Count query result is %ld rows %@", (long)[qr size], time];
                 [self.rootResults setQueryResult:nil];
                 [self.childResults setQueryResult:nil];
+                [self showEmptyStateTitle:[NSString stringWithFormat:@"Count is %ld", (long)[qr size]]
+                                     body:[NSString stringWithFormat:@"The query returned a count, not rows, %@.", time]];
             } else {
                 self.rootResults.queryResult = qr;
                 [self.childResults setQueryResult:nil];
                 [self setRowsLoadedStatusText:qr timing:time];
+                [self hideEmptyState];
             }
         } else {
             self.statusText = [NSString stringWithFormat:@"Query returned 0 rows %@", time];
             [self.rootResults setQueryResult:nil];
             [self.childResults setQueryResult:nil];
+            [self showEmptyStateTitle:@"Query returned 0 rows"
+                                 body:[NSString stringWithFormat:@"Nothing matched %@. Loosen the WHERE clause, or check the object in the sidebar.", time]];
         }
     };
     if ([query.lowercaseString hasPrefix:@"find "]) {
@@ -598,7 +649,8 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 }
 
 - (IBAction)executeQuery:(id)sender {
-    [self permformQuery:NO];
+    // Run honours the "Include deleted and archived" checkbox; the menu's Query All always does.
+    [self permformQuery:self.includeDeleted];
 }
 
 - (IBAction)executeQueryAll:(id)sender {
@@ -717,6 +769,124 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [detailsController dockInInspector:shell];
     [self updatePanelToggles];
     [self updateOrgChip];
+    [self installQueryChrome];
+
+    __weak Explorer *weakSelf = self;
+    apexController.executionBlockedReason = ^NSString *{
+        return weakSelf.writesAllowed ? nil : @"This org is read-only in Settings, so anonymous Apex can't run against it.";
+    };
+}
+
+// MARK:- Query chrome (editor footer, results footer, empty state)
+
+- (void)installQueryChrome {
+    if (self.runButton != nil) return;
+    NSScrollView *editorScroll = soql.enclosingScrollView;
+    NSView *box = editorScroll.superview;
+    if (box == nil) return;
+
+    // The nib's Query / Query All / Query More / Delete Checked buttons and the separator go away.
+    for (NSView *v in [box.subviews copy]) {
+        if ([v isKindOfClass:[NSButton class]] || [v isKindOfClass:[NSBox class]]) {
+            v.hidden = YES;
+        }
+    }
+    // Editor footer along the bottom of the editor pane; the editor shrinks to sit above it.
+    NSRect b = box.bounds;
+    SXBandView *footer = [[SXBandView alloc] initWithFrame:NSMakeRect(0, 0, NSWidth(b), kEditorFooterHeight)];
+    footer.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
+    [box addSubview:footer];
+    NSRect ef = editorScroll.frame;
+    CGFloat top = NSMaxY(ef);
+    editorScroll.frame = NSMakeRect(ef.origin.x, kEditorFooterHeight, NSWidth(ef), MAX(0, top - kEditorFooterHeight));
+
+    self.runButton = [SXControls primaryButtonWithTitle:@"Run" target:self action:@selector(executeQuery:)];
+    self.runButton.toolTip = @"Run the query (⌘R)";
+    self.includeDeletedCheckbox = [SXControls checkboxWithTitle:@"Include deleted and archived" target:nil action:nil];
+    self.editorMessage = [SXControls labelWithString:@"" font:[SXTokens caption] color:[SXTokens inkMuted]];
+    self.editorMessage.lineBreakMode = NSLineBreakByTruncatingTail;
+    [self placeFooterControls:footer leading:@[self.editorMessage] trailing:@[self.includeDeletedCheckbox, self.runButton]];
+    [self.runButton bind:NSEnabledBinding toObject:self withKeyPath:@"isLoggedIn" options:nil];
+    [self.runButton bind:@"enabled2" toObject:self withKeyPath:@"isQuerying" options:@{NSValueTransformerNameBindingOption: NSNegateBooleanTransformerName}];
+    [self.includeDeletedCheckbox bind:NSValueBinding toObject:self withKeyPath:@"includeDeleted" options:nil];
+    [self.editorMessage bind:NSValueBinding toObject:self withKeyPath:@"statusText" options:@{NSNullPlaceholderBindingOption: @""}];
+
+    // Results: wrap the root results scroll view so a footer and an empty state can share its pane.
+    NSScrollView *resultsScroll = rootTableView.enclosingScrollView;
+    NSView *pane = resultsScroll.superview;
+    if (pane != nil) {
+        NSView *container = [[NSView alloc] initWithFrame:resultsScroll.frame];
+        container.autoresizingMask = resultsScroll.autoresizingMask;
+        [pane replaceSubview:resultsScroll with:container];
+        NSRect cb = container.bounds;
+        resultsScroll.frame = NSMakeRect(0, kResultsFooterHeight, NSWidth(cb), MAX(0, NSHeight(cb) - kResultsFooterHeight));
+        resultsScroll.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [container addSubview:resultsScroll];
+
+        SXBandView *rfooter = [[SXBandView alloc] initWithFrame:NSMakeRect(0, 0, NSWidth(cb), kResultsFooterHeight)];
+        rfooter.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
+        [container addSubview:rfooter];
+        self.queryMoreButton = [SXControls defaultButtonWithTitle:@"Query more" target:self action:@selector(queryMore:)];
+        self.deleteButton = [SXControls dangerButtonWithTitle:@"Delete 0 records" target:self action:@selector(deleteCheckedRows:)];
+        [self placeFooterControls:rfooter leading:@[self.queryMoreButton] trailing:@[self.deleteButton]];
+        [self.queryMoreButton bind:NSHiddenBinding toObject:self withKeyPath:@"canQueryMore" options:@{NSValueTransformerNameBindingOption: NSNegateBooleanTransformerName}];
+        [self.queryMoreButton bind:NSEnabledBinding toObject:self withKeyPath:@"isQuerying" options:@{NSValueTransformerNameBindingOption: NSNegateBooleanTransformerName}];
+        [self.deleteButton bind:NSEnabledBinding toObject:self withKeyPath:@"hasSelectedForDelete" options:nil];
+        [self addObserver:self forKeyPath:@"deleteButtonTitle" options:NSKeyValueObservingOptionInitial context:kQueryChromeContext];
+        self.observingDeleteTitle = YES;
+
+        EmptyStateView *empty = [[EmptyStateView alloc] initWithFrame:resultsScroll.frame];
+        empty.autoresizingMask = resultsScroll.autoresizingMask;
+        empty.eyebrow = @"Results";
+        [container addSubview:empty positioned:NSWindowAbove relativeTo:resultsScroll];
+        self.resultsEmptyState = empty;
+        [self showEmptyStateTitle:@"No query run yet" body:@"Write a query above and press ⌘R, or pick one from Query, Insert Snippet."];
+    }
+}
+
+// Lays controls out in a footer band with frames: leading ones from the left, trailing ones from
+// the right, all vertically centred. The band's subviews use autoresizing like the rest of the nib.
+- (void)placeFooterControls:(NSView *)band leading:(NSArray<NSView*>*)leading trailing:(NSArray<NSView*>*)trailing {
+    CGFloat h = NSHeight(band.bounds);
+    CGFloat x = SXSpace2;
+    for (NSView *v in leading) {
+        v.translatesAutoresizingMaskIntoConstraints = YES;
+        [band addSubview:v];
+        NSSize sz = v.fittingSize;
+        if ([v isKindOfClass:[NSTextField class]]) {
+            sz.width = MAX(100, NSWidth(band.bounds) - x - SXSpace2);
+        }
+        v.frame = NSMakeRect(x, floor((h - sz.height) / 2), sz.width, sz.height);
+        v.autoresizingMask = [v isKindOfClass:[NSTextField class]] ? (NSViewWidthSizable | NSViewMaxYMargin | NSViewMinYMargin) : (NSViewMaxXMargin | NSViewMaxYMargin | NSViewMinYMargin);
+        x += sz.width + SXSpace2;
+    }
+    CGFloat right = NSWidth(band.bounds) - SXSpace2;
+    for (NSView *v in [trailing reverseObjectEnumerator]) {
+        v.translatesAutoresizingMaskIntoConstraints = YES;
+        [band addSubview:v];
+        NSSize sz = v.fittingSize;
+        v.frame = NSMakeRect(right - sz.width, floor((h - sz.height) / 2), sz.width, sz.height);
+        v.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin | NSViewMinYMargin;
+        right -= sz.width + SXSpace3;
+    }
+    // Leading text fields stop short of the trailing controls.
+    for (NSView *v in leading) {
+        if ([v isKindOfClass:[NSTextField class]]) {
+            NSRect f = v.frame;
+            f.size.width = MAX(60, right - f.origin.x);
+            v.frame = f;
+        }
+    }
+}
+
+- (void)showEmptyStateTitle:(NSString *)title body:(NSString *)body {
+    self.resultsEmptyState.title = title;
+    self.resultsEmptyState.body = body;
+    self.resultsEmptyState.hidden = NO;
+}
+
+- (void)hideEmptyState {
+    self.resultsEmptyState.hidden = YES;
 }
 
 // MARK: NSToolbarDelegate
@@ -815,6 +985,8 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
         self.orgInfo = info;
         [self updateOrgChip];
     }];
+    self.rootResults.instanceHost = self.sforce.serverUrl.host;
+    self.childResults.instanceHost = self.sforce.serverUrl.host;
 }
 
 - (void)updateOrgChip {
@@ -991,7 +1163,31 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
 }
 
 - (BOOL)hasSelectedForDelete {    
-    return self.rootResults.hasCheckedRows;
+    return self.rootResults.hasCheckedRows && self.deletesAllowed;
+}
+
+- (OrgSettings *)currentOrgSettings {
+    return self.orgInfo == nil ? nil : [OrgSettings settingsForOrgId:self.orgInfo.orgId];
+}
+
+- (BOOL)deletesAllowed {
+    OrgSettings *s = [self currentOrgSettings];
+    return s == nil ? YES : !s.preventDelete;
+}
+
+- (BOOL)writesAllowed {
+    OrgSettings *s = [self currentOrgSettings];
+    return s == nil ? YES : !s.readOnly;
+}
+
+- (BOOL)allowsEditing {
+    return self.writesAllowed;
+}
+
+- (NSString *)deleteButtonTitle {
+    NSUInteger n = self.rootResults.checkedRowCount;
+    if (n == 1) return @"Delete 1 record";
+    return [NSString stringWithFormat:@"Delete %lu records", (unsigned long)n];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
@@ -1003,6 +1199,14 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
         [self updatePanelToggles];
     } else if (object == [NSUserDefaults standardUserDefaults]) {
         [self colorize];
+    } else if (context == kQueryChromeContext) {
+        if (self.deleteButton != nil) {
+            [SXControls setTitle:self.deleteButtonTitle onButton:self.deleteButton];
+            [self.deleteButton sizeToFit];
+            NSRect f = self.deleteButton.frame;
+            CGFloat right = NSWidth(self.deleteButton.superview.bounds) - SXSpace2;
+            self.deleteButton.frame = NSMakeRect(right - NSWidth(f), f.origin.y, NSWidth(f), NSHeight(f));
+        }
     }
 }
 
@@ -1012,8 +1216,25 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
 }
 
 - (IBAction)deleteCheckedRows:(id)sender {
-    BulkDelete *bd = [[BulkDelete alloc] initWithClient:sforce];
-    [bd performBulkDelete:self.rootResults window:myWindow];
+    if (!self.deletesAllowed) {
+        NSAlert *a = [[NSAlert alloc] init];
+        a.messageText = @"Deleting is turned off for this org";
+        a.informativeText = @"Change it under Settings, Connections, if you really mean to delete records here.";
+        [a runModal];
+        return;
+    }
+    NSUInteger count = self.rootResults.checkedRowCount;
+    if (count == 0) return;
+    NSString *objectName = [self.rootResults.queryResult.records.firstObject type] ?: @"";
+    SXOrgKind kind = self.orgInfo == nil ? SXOrgKindProduction : [[self currentOrgSettings] effectiveKindFor:self.orgInfo];
+    if (kind == SXOrgKindTrial) {
+        kind = SXOrgKindProduction;   // a trial counts as Production for the safety rules
+    }
+    [ConfirmDeleteDialog confirmDeleteOf:count objectName:objectName kind:kind window:myWindow completion:^(BOOL confirmed) {
+        if (!confirmed) return;
+        BulkDelete *bd = [[BulkDelete alloc] initWithClient:self->sforce];
+        [bd performBulkDelete:self.rootResults window:self->myWindow];
+    }];
 }
 
 - (void)dataChangedOnObject:(ZKSObject *)anObject field:(NSString *)fieldName value:(id)newValue {

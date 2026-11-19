@@ -123,6 +123,7 @@ typedef NSMutableDictionary<NSString *, Completion*> CompletionBySObject;
 @end
 
 @interface SoqlTokenizer()
+@property (strong,nonatomic) NSFont *boldFontCache;
 @property (strong,nonatomic) Tokens *tokens;
 @property (strong,nonatomic) SoqlParser *soqlParser;
 @property (strong,nonatomic) FnCompletionsCache *fnCompletionsCache;
@@ -225,9 +226,23 @@ typedef NSMutableDictionary<NSString *, Completion*> CompletionBySObject;
     self.coloredLastTime = TRUE;
 }
 
+-(NSFont *)boldFont {
+    if (self.baseFont == nil) {
+        return nil;
+    }
+    if (self.boldFontCache == nil || self.boldFontCache.pointSize != self.baseFont.pointSize || ![self.boldFontCache.familyName isEqualToString:self.baseFont.familyName]) {
+        NSFont *b = [[NSFontManager sharedFontManager] convertFont:self.baseFont toHaveTrait:NSBoldFontMask];
+        self.boldFontCache = b ?: self.baseFont;
+    }
+    return self.boldFontCache;
+}
+
 -(void)removeAttributes:(NSTextStorage*)txt {
     NSRange all = NSMakeRange(0, txt.length);
     [txt addAttribute:NSForegroundColorAttributeName value:[NSColor textColor] range:all];
+    if (self.baseFont != nil) {
+        [txt addAttribute:NSFontAttributeName value:self.baseFont range:all];
+    }
     [txt removeAttribute:NSToolTipAttributeName range:all];
     [txt removeAttribute:NSCursorAttributeName range:all];
     [txt removeAttribute:NSUnderlineStyleAttributeName range:all];
@@ -850,6 +865,10 @@ typedef NSMutableDictionary<NSString *, Completion*> CompletionBySObject;
                     [txt replaceCharactersInRange:t.loc withString:[t.tokenTxt uppercaseString]];
                 }
                 [txt addAttributes:style.keyword range:t.loc];
+                if (self.baseFont != nil) {
+                    // keywords are semibold as well as coloured, so they still stand out without the hue.
+                    [txt addAttribute:NSFontAttributeName value:[self boldFont] range:t.loc];
+                }
                 break;
             case TTAlias:
             case TTAliasDecl:

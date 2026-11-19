@@ -46,6 +46,10 @@
 @property describeProvider describer;
 
 @property (readonly) BOOL hasCheckedRows;
+@property (readonly) NSUInteger checkedRowCount;
+
+// host used to build record URLs for Id cells; forwarded to the wrapper.
+@property (copy, nonatomic) NSString *instanceHost;
 
 -(void)showHideErrorColumn;
 -(void)addQueryMoreResults:(ZKQueryResult *)queryResult;

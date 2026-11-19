@@ -24,6 +24,7 @@
 #import <ZKSforce/ZKSforce.h>
 #import "SObject.h"
 #import "ZKQueryResult+Display.h"
+#import "SalesforceIds.h"
 
 @implementation EditableQueryResultWrapper
 
@@ -36,6 +37,8 @@ static NSArray *systemColumnIds;
 +(NSSet *)keyPathsForValuesAffectingValueForKey:(NSString *)key {
     NSSet *paths = [super keyPathsForValuesAffectingValueForKey:key];
     if ([key isEqualToString:@"hasCheckedRows"])
+        return [paths setByAddingObject:@"queryResult"];
+    if ([key isEqualToString:@"checkedRowCount"])
         return [paths setByAddingObject:@"queryResult"];
     if ([key isEqualToString:@"hasErrors"])
         return [paths setByAddingObject:@"queryResult"];
@@ -76,12 +79,24 @@ static NSArray *systemColumnIds;
     return NO;
 }
 
+- (NSUInteger)checkedRowCount {
+    NSUInteger n = 0;
+    for (ZKSObject *row in self.queryResult.records) {
+        if (row.checked) {
+            n++;
+        }
+    }
+    return n;
+}
+
 - (void)setChecksOnAllRows:(BOOL)checked {
     if (!self.editable) return;
     [self willChangeValueForKey:@"hasCheckedRows"];
+    [self willChangeValueForKey:@"checkedRowCount"];
     for (ZKSObject *row in self.queryResult.records) {
         row.checked = checked;
     }
+    [self didChangeValueForKey:@"checkedRowCount"];
     [self didChangeValueForKey:@"hasCheckedRows"];
 }
 
@@ -104,6 +119,7 @@ static NSArray *systemColumnIds;
 
 - (BOOL)allowEdit:(NSTableColumn *)aColumn {
     if (!self.editable) return NO;
+    if ([self.delegate respondsToSelector:@selector(allowsEditing)] && ![self.delegate allowsEditing]) return NO;
     if (self.delegate.isEditing) return NO;
     if ([aColumn.identifier isEqualToString:ERROR_COLUMN_IDENTIFIER]) return NO;
     return [aColumn.identifier rangeOfString:@"."].location == NSNotFound;
@@ -157,7 +173,9 @@ static NSArray *systemColumnIds;
     BOOL isDelete = [aTableColumn.identifier isEqualToString:DELETE_COLUMN_IDENTIFIER];
     if (isDelete) {
         [self willChangeValueForKey:@"hasCheckedRows"];
+        [self willChangeValueForKey:@"checkedRowCount"];
         row.checked = !row.checked;
+        [self didChangeValueForKey:@"checkedRowCount"];
         [self didChangeValueForKey:@"hasCheckedRows"];
     } else {
         [self.delegate dataChangedOnObject:row field:aTableColumn.identifier value:anObject];
@@ -191,6 +209,29 @@ static NSArray *systemColumnIds;
         return NO;
     }
     return YES;
+}
+
+// MARK:- Id links
+- (void)tableClicked:(id)sender {
+    if (![sender isKindOfClass:[NSTableView class]]) return;
+    NSTableView *tv = (NSTableView *)sender;
+    if (!([NSApp currentEvent].modifierFlags & NSEventModifierFlagCommand)) return;
+    NSInteger row = tv.clickedRow;
+    NSInteger col = tv.clickedColumn;
+    if (row < 0 || col < 0 || col >= (NSInteger)tv.tableColumns.count) return;
+    id value = [self tableView:tv objectValueForTableColumn:tv.tableColumns[col] row:row];
+    if (![SalesforceIds looksLikeId:value]) return;
+    if (self.instanceHost.length == 0) return;
+    NSURL *url = [SalesforceIds recordURLForId:value host:self.instanceHost];
+    if (url != nil) {
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
+
+- (NSString *)tableView:(NSTableView *)tv toolTipForCell:(NSCell *)cell rect:(NSRectPointer)rect tableColumn:(NSTableColumn *)tc row:(NSInteger)row mouseLocation:(NSPoint)p {
+    if (tc == nil || row < 0) return nil;
+    id value = [self tableView:tv objectValueForTableColumn:tc row:row];
+    return [SalesforceIds looksLikeId:value] ? @"⌘-click to open in Salesforce" : nil;
 }
 
 // MARK:- NSControlTextEditingDelegate

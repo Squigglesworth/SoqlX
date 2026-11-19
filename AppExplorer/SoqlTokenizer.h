@@ -42,6 +42,9 @@
 @interface SoqlTokenizer : NSObject<NSTextViewDelegate, NSTextStorageDelegate>
 @property (strong,nonatomic) id<TokenizerDescriber> describer;
 @property (strong,nonatomic) ZKTextView *view;
+// The edit font. Keywords and operators are drawn in its bold face; everything else is reset to
+// it on each colouring pass. Set this whenever the edit font changes.
+@property (strong,nonatomic) NSFont *baseFont;
 -(void)color;
 // for testing
 -(Tokens*)parseAndResolve:(NSString*)soql;

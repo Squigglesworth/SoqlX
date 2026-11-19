@@ -27,6 +27,9 @@
 @protocol EditableQueryResultWrapperDelegate
 -(void) dataChangedOnObject:(ZKSObject *)sobject field:(NSString *)fieldName value:(id)value;
 -(BOOL) isEditing;
+@optional
+// Return NO to block all cell editing (e.g. the org is read-only in Settings).
+-(BOOL) allowsEditing;
 @end
 
 @interface EditableQueryResultWrapper : NSObject<NSTableViewDataSource, NSTableViewDelegate, NSControlTextEditingDelegate> {
@@ -41,6 +44,13 @@
 @property (weak) NSObject<EditableQueryResultWrapperDelegate> *delegate;
 
 @property (readonly) BOOL hasCheckedRows;
+@property (readonly, nonatomic) NSUInteger checkedRowCount;
+
+// host used to build record URLs for Id cells, e.g. na1.salesforce.com
+@property (copy, nonatomic) NSString *instanceHost;
+
+// target/action for the table; cmd-click on an Id opens the record in the browser.
+-(void)tableClicked:(id)sender;
 
 @property (readonly) BOOL hasErrors;
 - (void)clearErrors;

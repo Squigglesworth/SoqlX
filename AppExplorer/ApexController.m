@@ -159,6 +159,14 @@
 }
 
 -(IBAction)executeApex:(id)sender {
+    NSString *blocked = self.executionBlockedReason != nil ? self.executionBlockedReason() : nil;
+    if (blocked.length > 0) {
+        NSAlert *a = [[NSAlert alloc] init];
+        a.messageText = @"Apex not run";
+        a.informativeText = blocked;
+        [a runModal];
+        return;
+    }
     ZKApexClient *c = apexClient;
     [c executeAnonymous:self.apex withFailBlock:^(NSError *result) {
         [[NSAlert alertWithError:result] runModal];
