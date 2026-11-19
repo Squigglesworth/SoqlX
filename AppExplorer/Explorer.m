@@ -37,6 +37,11 @@
 #import "SoqlTokenizer.h"
 #import "ZKTextView.h"
 #import "SnippetLibrary.h"
+#import "Shell/ShellView.h"
+#import "Shell/NavRailView.h"
+#import "Shell/OrgChipView.h"
+#import "OrgSettings.h"
+#import "DesignTokens.h"
 
 static NSString *soqlTabId = @"soql";
 static NSString *schemaTabId = @"schema";
@@ -76,7 +81,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     if ([key isEqualToString:@"canQueryMore"])
         return [paths setByAddingObjectsFromArray:@[@"rootResults.queryResult"]];
     if ([key isEqualToString:@"titleUserInfo"])
-        return [paths setByAddingObjectsFromArray:@[@"sforce", @"queryFilename", @"apexFilename", @"selectedTabViewIdentifier"]];
+        return [paths setByAddingObjectsFromArray:@[@"sforce", @"queryFilename", @"apexFilename", @"selectedTabViewIdentifier", @"orgInfo"]];
     if ([key isEqualToString:@"hasSelectedForDelete"])
         return [paths setByAddingObjectsFromArray:@[@"rootResults.hasCheckedRows"]];
     return paths;
@@ -263,6 +268,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
         self->queryListController.prefsPrefix = userId;
         self->detailsController.prefsPrefix = userId;
     }];
+    [self loadOrgInfo];
 
     DescribeListDataSource *dds = [[DescribeListDataSource alloc] init];
     descDataSource = dds;
@@ -646,16 +652,122 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     if (self.sforce == nil) {
         return doc;
     }
-    // Regular soap login will always have the cachedUserInfo from Login Result.
-    // SID based logins, explictly call cachedUserInfo to validate the sid.
-    // So by this point there's always a cached user info we can use.
-    NSString *user = [NSString stringWithFormat:@"%@ : %@ (%@ on %@)",
-        doc,
-        [[sforce cachedUserInfo] fullName],
-        [sforce cachedUserInfo].userName,
-        [sforce serverHostAbbriviation]];
-    
-    return user;
+    // The window title is hidden; this is the tab title. Per the design system the org identity is
+    // the label (or org name), never the username; the OrgChip carries the detail.
+    NSString *org = nil;
+    if (self.orgInfo != nil) {
+        org = [[OrgSettings settingsForOrgId:self.orgInfo.orgId] displayLabelForOrgName:self.orgInfo.name];
+    } else {
+        org = [sforce cachedUserInfo].organizationName ?: [sforce serverHostAbbriviation];
+    }
+    BOOL hasFile = ![doc isEqualToString:@"SoqlX Rebooted"];
+    return hasFile ? [NSString stringWithFormat:@"%@ \u00b7 %@", org, doc] : org;
+}
+
+// MARK:- Shell (title bar, nav rail, org chip, inspector)
+
+- (void)installShell {
+    if (self.shell != nil || myWindow == nil) {
+        return;
+    }
+    NSView *content = myWindow.contentView;
+    // Detach the nib's content view from the window before re-parenting it inside the shell.
+    myWindow.contentView = [[NSView alloc] initWithFrame:content.frame];
+    ShellView *shell = [[ShellView alloc] initWithContentView:content];
+    myWindow.contentView = shell;
+    [myWindow setContentBorderThickness:0 forEdge:NSMaxYEdge];
+    myWindow.backgroundColor = [SXTokens ground];
+
+    // The rail replaces the segmented view switcher; the title bar toggles replace the Details/Recent one.
+    self.soqlSchemaApexSelector.hidden = YES;
+    self.detailsRecentSelector.hidden = YES;
+
+    NavRailView *rail = shell.rail;
+    [rail addItemWithTitle:@"Query"    image:[NSImage imageNamed:@"icon.query"]    tag:0 pinToBottom:NO];
+    [rail addItemWithTitle:@"Schema"   image:[NSImage imageNamed:@"icon.schema"]   tag:1 pinToBottom:NO];
+    [rail addItemWithTitle:@"Apex"     image:[NSImage imageNamed:@"icon.apex"]     tag:2 pinToBottom:NO];
+    [rail addItemWithTitle:@"Settings" image:[NSImage imageNamed:@"icon.settings"] tag:3 pinToBottom:YES];
+    rail.target = self;
+    rail.action = @selector(selectViewFromRail:);
+    rail.selectedTag = [self railTagForTabIdentifier:soqlSchemaTabs.selectedTabViewItem.identifier];
+
+    shell.recentToggle.target = self;
+    shell.recentToggle.action = @selector(toggleRecentPanel:);
+    shell.detailsToggle.target = self;
+    shell.detailsToggle.action = @selector(toggleInspector:);
+
+    [detailsController dockInInspector:shell];
+    self.shell = shell;
+    [self updatePanelToggles];
+    [self updateOrgChip];
+}
+
+- (NSInteger)railTagForTabIdentifier:(NSString *)identifier {
+    if ([identifier isEqualToString:schemaTabId]) return 1;
+    if ([identifier isEqualToString:apexTabId]) return 2;
+    return 0;
+}
+
+- (void)selectViewFromRail:(id)sender {
+    NSInteger tag = self.shell.rail.selectedTag;
+    switch (tag) {
+        case 1: [soqlSchemaTabs selectTabViewItemWithIdentifier:schemaTabId]; break;
+        case 2: [soqlSchemaTabs selectTabViewItemWithIdentifier:apexTabId]; break;
+        case 3:
+            // Settings isn't a view yet; open Preferences and leave the rail on the current view.
+            [NSApp sendAction:@selector(showPreferences:) to:nil from:self];
+            self.shell.rail.selectedTag = [self railTagForTabIdentifier:soqlSchemaTabs.selectedTabViewItem.identifier];
+            break;
+        default: [soqlSchemaTabs selectTabViewItemWithIdentifier:soqlTabId]; break;
+    }
+}
+
+- (void)toggleRecentPanel:(id)sender {
+    queryListController.windowVisible = !queryListController.windowVisible;
+}
+
+- (void)toggleInspector:(id)sender {
+    detailsController.windowVisible = !detailsController.windowVisible;
+}
+
+- (void)updatePanelToggles {
+    if (self.shell == nil) return;
+    self.shell.detailsToggle.contentTintColor = detailsController.windowVisible ? [SXTokens accentInk] : [SXTokens inkMuted];
+    self.shell.recentToggle.contentTintColor = queryListController.windowVisible ? [SXTokens accentInk] : [SXTokens inkMuted];
+}
+
+- (void)loadOrgInfo {
+    NSString *q = @"SELECT Id, Name, IsSandbox, OrganizationType, TrialExpirationDate FROM Organization";
+    [sforce query:q failBlock:^(NSError *err) {
+        NSLog(@"Unable to read the Organization record: %@", err);
+    } completeBlock:^(ZKQueryResult *qr) {
+        ZKSObject *o = qr.records.firstObject;
+        if (o == nil) return;
+        OrgInfo *info = [OrgInfo new];
+        info.orgId = [o fieldValue:@"Id"];
+        info.name = [o fieldValue:@"Name"];
+        info.organizationType = [o fieldValue:@"OrganizationType"];
+        info.isSandbox = [o boolValue:@"IsSandbox"];
+        info.trialExpiration = [o dateTimeValue:@"TrialExpirationDate"];
+        info.instanceHost = self.sforce.serverUrl.host;
+        self.orgInfo = info;
+        [self updateOrgChip];
+    }];
+}
+
+- (void)updateOrgChip {
+    OrgChipView *chip = self.shell.orgChip;
+    if (chip == nil) return;
+    if (self.orgInfo == nil) {
+        chip.hidden = YES;
+        return;
+    }
+    OrgSettings *settings = [OrgSettings settingsForOrgId:self.orgInfo.orgId];
+    chip.kind = [settings effectiveKindFor:self.orgInfo];
+    chip.label = [settings displayLabelForOrgName:self.orgInfo.name];
+    chip.detail = self.orgInfo.instanceHost;
+    chip.color = [settings color];
+    chip.hidden = NO;
 }
 
 // MARK:- File load/save
@@ -820,8 +932,10 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if (object == detailsController) {
         [self.detailsRecentSelector setSelected:[change[NSKeyValueChangeNewKey] boolValue] forSegment:0];
+        [self updatePanelToggles];
     } else if (object == queryListController) {
         [self.detailsRecentSelector setSelected:[change[NSKeyValueChangeNewKey] boolValue] forSegment:1];
+        [self updatePanelToggles];
     } else if (object == [NSUserDefaults standardUserDefaults]) {
         [self colorize];
     }
@@ -903,6 +1017,9 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
         [self setSchemaViewIsActive:NO];
     }
     self.selectedTabViewIdentifier = item.identifier;
+    if (self.shell != nil) {
+        self.shell.rail.selectedTag = [self railTagForTabIdentifier:item.identifier];
+    }
 }
 
 // NSSplitView delegate

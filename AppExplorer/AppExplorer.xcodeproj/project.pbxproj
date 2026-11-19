@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F6000000000D63 /* NavRailView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D62 /* NavRailView.m */; };
+		A1B2C3D4E5F6000000000D66 /* OrgChipView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D65 /* OrgChipView.m */; };
+		A1B2C3D4E5F6000000000D69 /* ShellView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D68 /* ShellView.m */; };
+		A1B2C3D4E5F6000000000D73 /* OrgSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D72 /* OrgSettings.m */; };
+		A1B2C3D4E5F6000000000D74 /* OrgSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D72 /* OrgSettings.m */; };
+		A1B2C3D4E5F6000000000D76 /* OrgSettingsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */; };
 		A1B2C3D4E5F6000000000D42 /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D41 /* Fonts */; };
 		A1B2C3D4E5F6000000000D53 /* DesignTokens.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D52 /* DesignTokens.m */; };
 		A1B2C3D4E5F6000000000D54 /* DesignTokens.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D52 /* DesignTokens.m */; };
@@ -262,6 +268,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4E5F6000000000D61 /* NavRailView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NavRailView.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D62 /* NavRailView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NavRailView.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D64 /* OrgChipView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OrgChipView.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D65 /* OrgChipView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OrgChipView.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D67 /* ShellView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShellView.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D68 /* ShellView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShellView.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D71 /* OrgSettings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OrgSettings.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D72 /* OrgSettings.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OrgSettings.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OrgSettingsTests.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D41 /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D51 /* DesignTokens.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DesignTokens.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D52 /* DesignTokens.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DesignTokens.m; sourceTree = "<group>"; };
@@ -501,6 +516,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		A1B2C3D4E5F6000000000D60 /* Shell */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000D61 /* NavRailView.h */,
+				A1B2C3D4E5F6000000000D62 /* NavRailView.m */,
+				A1B2C3D4E5F6000000000D64 /* OrgChipView.h */,
+				A1B2C3D4E5F6000000000D65 /* OrgChipView.m */,
+				A1B2C3D4E5F6000000000D67 /* ShellView.h */,
+				A1B2C3D4E5F6000000000D68 /* ShellView.m */,
+			);
+			path = Shell;
+			sourceTree = "<group>";
+		};
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
@@ -541,6 +569,9 @@
 				A1B2C3D4E5F6000000000D21 /* snippets.json */,
 				A1B2C3D4E5F6000000000D51 /* DesignTokens.h */,
 				A1B2C3D4E5F6000000000D52 /* DesignTokens.m */,
+				A1B2C3D4E5F6000000000D71 /* OrgSettings.h */,
+				A1B2C3D4E5F6000000000D72 /* OrgSettings.m */,
+				A1B2C3D4E5F6000000000D60 /* Shell */,
 				F494FA3C0F7EFDD2001216EC /* GlossShader */,
 				F4B8AFC518A8540800FE114F /* IconProvider.h */,
 				F48B6B8A1969E68700496C82 /* Prefs.h */,
@@ -818,6 +849,7 @@
 				F48804DC2592BE57001D56F6 /* CaseInsensitiveKeyTest.m */,
 				F4C889D12624F272006D606A /* SoqlTokenizerTests.m */,
 				A1B2C3D4E5F6000000000D31 /* HelpDocsTests.m */,
+				A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */,
 				F4394F9B264981C000ABFA2B /* describes.xml */,
 				F4DE4053256205D300FBA200 /* Info.plist */,
 			);
@@ -1208,6 +1240,10 @@
 				F4DF0B4F26388CFF00B3A1A9 /* SoqlFunction.m in Sources */,
 				A1B2C3D4E5F6000000000D03 /* SoqlDocs.m in Sources */,
 				A1B2C3D4E5F6000000000D53 /* DesignTokens.m in Sources */,
+				A1B2C3D4E5F6000000000D73 /* OrgSettings.m in Sources */,
+				A1B2C3D4E5F6000000000D63 /* NavRailView.m in Sources */,
+				A1B2C3D4E5F6000000000D66 /* OrgChipView.m in Sources */,
+				A1B2C3D4E5F6000000000D69 /* ShellView.m in Sources */,
 				A1B2C3D4E5F6000000000D13 /* SnippetLibrary.m in Sources */,
 				F4D7831E15D49F7B00D00BB9 /* AppDelegate.m in Sources */,
 				F4D7833415D5F46600D00BB9 /* BaseUserBasedController.m in Sources */,
@@ -1230,6 +1266,8 @@
 				F4DF0B5F2638BDA100B3A1A9 /* SoqlFunction.m in Sources */,
 				A1B2C3D4E5F6000000000D04 /* SoqlDocs.m in Sources */,
 				A1B2C3D4E5F6000000000D54 /* DesignTokens.m in Sources */,
+				A1B2C3D4E5F6000000000D74 /* OrgSettings.m in Sources */,
+				A1B2C3D4E5F6000000000D76 /* OrgSettingsTests.m in Sources */,
 				A1B2C3D4E5F6000000000D14 /* SnippetLibrary.m in Sources */,
 				A1B2C3D4E5F6000000000D32 /* HelpDocsTests.m in Sources */,
 				F4408FF02562F4C1005E8BB7 /* QueryColumns.m in Sources */,

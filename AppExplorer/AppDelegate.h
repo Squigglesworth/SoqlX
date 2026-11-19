@@ -32,6 +32,9 @@
 - (IBAction)launchHelp:(id)sender;
 // View > Appearance: the sender's tag is 0 (match system), 1 (light) or 2 (dark).
 - (IBAction)setAppearanceFromMenu:(id)sender;
+// Opens the Preferences window (the NavRail's Settings item until the Settings view exists).
+- (IBAction)showPreferences:(id)sender;
+@property (strong) IBOutlet NSWindow *prefsWindow;
 // Reveals the user's snippets.json in the Finder, creating it with an example first if needed.
 - (IBAction)editUserSnippets:(id)sender;
 - (IBAction)openNewWindow:(id)sender;

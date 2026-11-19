@@ -43,4 +43,9 @@
 
 @property (assign) BOOL windowVisible;
 
+// Records the new visibility (and the per-user pref) and, when updateWindow is YES, shows or
+// hides the panel. Subclasses that present their content somewhere other than panelWindow
+// override this, call super with updateWindow:NO, and do their own showing.
+-(void)setWindowVisible:(BOOL)windowVisible updateWindow:(BOOL)updateWindow;
+
 @end

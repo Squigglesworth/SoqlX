@@ -128,6 +128,10 @@
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:help]];
 }
 
+- (IBAction)showPreferences:(id)sender {
+    [self.prefsWindow makeKeyAndOrderFront:sender];
+}
+
 // MARK: - Query > Insert Snippet
 
 // We're the delegate of the Insert Snippet submenu, so the snippet list (including the
@@ -402,6 +406,15 @@
 
 -(void)windowDidLoad {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowWillClose:) name:NSWindowWillCloseNotification object:self.window];
+    // The shell draws its own title bar area (product name, panel toggles, org chip), so hide the
+    // system title and let content extend under the title bar. Every org window joins one tab group.
+    NSWindow *w = self.window;
+    w.titleVisibility = NSWindowTitleHidden;
+    w.titlebarAppearsTransparent = YES;
+    w.styleMask |= NSWindowStyleMaskFullSizeContentView;
+    w.tabbingMode = NSWindowTabbingModePreferred;
+    w.tabbingIdentifier = @"SoqlXRebootedOrg";
+    [self.explorer installShell];
 }
 
 -(void)windowWillClose:(id)sender {

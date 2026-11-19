@@ -22,6 +22,7 @@
 #import "BaseUserBasedController.h"
 
 @class DetailDataSource;
+@class ShellView;
 
 @interface DetailsController : BaseWindowToggleController<NSWindowDelegate> {
 	IBOutlet NSTableView		*detailsTable;
@@ -32,5 +33,10 @@
 - (void)setIcon:(NSImage *)image;
 
 @property (nonatomic,strong) DetailDataSource *dataSource;
+
+// Moves the details table out of its floating panel into the shell's inspector column. After
+// this, windowVisible shows/hides the inspector instead of the panel.
+- (void)dockInInspector:(ShellView *)shell;
+@property (weak, nonatomic) ShellView *inspectorHost;
 
 @end

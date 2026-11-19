@@ -37,6 +37,8 @@
 @class QueryResultTable;
 @class ApexController;
 @class ZKTextView;
+@class ShellView;
+@class OrgInfo;
 
 @interface Explorer : NSObject<EditableQueryResultWrapperDelegate, NSWindowDelegate, NSTabViewDelegate, QueryTextListViewDelegate, ZKLoginControllerDelegate, ZKBaseClientDelegate, DescriberDelegate>
 {
@@ -89,6 +91,13 @@
 // Inserts the SoqlSnippet in the sender's representedObject into the query editor at the
 // insertion point (replacing the selection, or the whole text if the editor is empty).
 - (IBAction)insertSnippet:(id)sender;
+
+// Wraps the window's content in the design system shell (title bar, nav rail, inspector).
+// Called once by the window controller after the nib has loaded.
+- (void)installShell;
+@property (strong) ShellView *shell;
+// What the org told us at login (nil until the Organization query completes).
+@property (strong) OrgInfo *orgInfo;
 
 // If not nil the soql query is asocicated with a file. i.e. it was loaded from, or saved to.
 @property (strong) NSURL *queryFilename;

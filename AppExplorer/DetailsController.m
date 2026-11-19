@@ -23,6 +23,7 @@
 #import "NSWindow_additions.h"
 #import "NSTableView_additions.h"
 #import "DataSources.h"
+#import "Shell/ShellView.h"
 
 static NSString *SHOWING_DETAILS = @"details";
 
@@ -55,11 +56,48 @@ static NSString *SHOWING_DETAILS = @"details";
     aValue.onChange = ^void(DetailDataSource*ds) {
         [self->detailsTable reloadData];
     };
+    self.inspectorHost.inspectorTitle.stringValue = self.title ?: @"";
 }
 
 - (void)setIcon:(NSImage *)image {
+    if (self.inspectorHost != nil) {
+        // docked in the main window, which has no document icon.
+        return;
+    }
     detailsTable.window.representedURL = [NSURL fileURLWithPath:self.title];
     [detailsTable.window standardWindowButton:NSWindowDocumentIconButton].image = image;
+}
+
+- (void)dockInInspector:(ShellView *)shell {
+    NSScrollView *sv = detailsTable.enclosingScrollView;
+    if (sv == nil || shell == nil) {
+        return;
+    }
+    [sv removeFromSuperview];
+    sv.translatesAutoresizingMaskIntoConstraints = NO;
+    sv.borderType = NSNoBorder;
+    NSView *container = shell.inspectorContainer;
+    [container addSubview:sv];
+    [NSLayoutConstraint activateConstraints:@[
+        [sv.leadingAnchor constraintEqualToAnchor:container.leadingAnchor],
+        [sv.trailingAnchor constraintEqualToAnchor:container.trailingAnchor],
+        [sv.topAnchor constraintEqualToAnchor:container.topAnchor],
+        [sv.bottomAnchor constraintEqualToAnchor:container.bottomAnchor],
+    ]];
+    self.inspectorHost = shell;
+    shell.inspectorTitle.stringValue = self.title ?: @"";
+    [shell setInspectorVisible:self.windowVisible animated:NO];
+}
+
+-(void)setWindowVisible:(BOOL)windowVisible updateWindow:(BOOL)updateWindow {
+    if (self.inspectorHost == nil) {
+        [super setWindowVisible:windowVisible updateWindow:updateWindow];
+        return;
+    }
+    [super setWindowVisible:windowVisible updateWindow:NO];
+    if (updateWindow) {
+        [self.inspectorHost setInspectorVisible:windowVisible animated:YES];
+    }
 }
 
 - (IBAction) copy:(id)sender {
