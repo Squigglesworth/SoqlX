@@ -25,8 +25,14 @@
 #import "CredentialsController.h"
 #import "Defaults.h"
 #import "NSArray+Partition.h"
+#import <CommonCrypto/CommonDigest.h>
 
 int DEFAULT_API_VERSION = 58;
+
+// decodeParams is implemented by ZKSforce but not exported in its headers.
+@interface ZKOAuthInfo(params)
++(NSDictionary*)decodeParams:(NSString*)fragment error:(NSError **)err;
+@end
 
 // Holds any state that the UI might want to have bindings to.
 // If a UI control has a binding to ZKLoginController directly
@@ -84,6 +90,11 @@ int DEFAULT_API_VERSION = 58;
 @property (strong) IBOutlet LoginTargetController *targetController;
 @property (strong) IBOutlet CredentialsController *credsController;
 @property (strong) IBOutlet LoginControllerState  *state;
+
+// State of an in-progress OAuth web server (authorization code + PKCE) flow, set when the
+// user picks a login server and consumed when the browser sends the code back to us.
+@property (strong) NSString *pkceVerifier;
+@property (strong) NSURL *pendingAuthHost;
 
 -(IBAction)showLoginHelp:(id)sender;
 -(void)closeLoginUi;
@@ -203,14 +214,46 @@ static NSString *PLIST_OAUTH_CID = @"SoqlXOAuthConsumerKey";
     return DEFAULT_OAUTH_CID;
 }
 
+static NSString *OAUTH_CALLBACK = @"soqlx://oauth/";
+
+// Unpadded base64url, as required for PKCE values.
+static NSString *base64url(NSData *d) {
+    NSString *s = [d base64EncodedStringWithOptions:0];
+    s = [s stringByReplacingOccurrencesOfString:@"+" withString:@"-"];
+    s = [s stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
+    return [s stringByReplacingOccurrencesOfString:@"=" withString:@""];
+}
+
+// Form-encodes a value for the body of a token request. The query-allowed set still permits
+// & + = so those are escaped explicitly.
+static NSString *formEncode(NSString *v) {
+    NSMutableCharacterSet *cs = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
+    [cs removeCharactersInString:@"&+=/?:"];
+    return [v stringByAddingPercentEncodingWithAllowedCharacters:cs];
+}
+
+// Salesforce disabled the OAuth user-agent (implicit) flow in 2026, so this uses the web server
+// flow with PKCE: the browser hands us back a one-time code, which we exchange for tokens at
+// the token endpoint. No client secret is involved, so the connected app must have
+// "Require Secret for Web Server Flow" turned off.
 -(void)loginTargetSelected:(NSURL *)item {
-    NSString *cb = @"soqlx://oauth/";
+    uint8_t random[32];
+    arc4random_buf(random, sizeof(random));
+    NSString *verifier = base64url([NSData dataWithBytes:random length:sizeof(random)]);
+    NSData *verifierBytes = [verifier dataUsingEncoding:NSASCIIStringEncoding];
+    uint8_t digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(verifierBytes.bytes, (CC_LONG)verifierBytes.length, digest);
+    NSString *challenge = base64url([NSData dataWithBytes:digest length:sizeof(digest)]);
+    self.pkceVerifier = verifier;
+    self.pendingAuthHost = item;
+
     // build the URL to the oauth page with our client_id & callback URL set.
     NSCharacterSet *urlcs = [NSCharacterSet URLQueryAllowedCharacterSet];
-    NSString *path = [NSString stringWithFormat:@"/services/oauth2/authorize?response_type=token&client_id=%@&redirect_uri=%@&state=%@",
+    NSString *path = [NSString stringWithFormat:@"/services/oauth2/authorize?response_type=code&client_id=%@&redirect_uri=%@&state=%@&code_challenge=%@&code_challenge_method=S256",
                        [[ZKLoginController oauthConsumerKey] stringByAddingPercentEncodingWithAllowedCharacters:urlcs],
-                       [cb stringByAddingPercentEncodingWithAllowedCharacters:urlcs],
-                       [self.controllerId stringByAddingPercentEncodingWithAllowedCharacters:urlcs]];
+                       [OAUTH_CALLBACK stringByAddingPercentEncodingWithAllowedCharacters:urlcs],
+                       [self.controllerId stringByAddingPercentEncodingWithAllowedCharacters:urlcs],
+                       challenge];
     NSURL *url = [NSURL URLWithString:path relativeToURL:item];
 
     // ask the OS to open browser to the URL
@@ -241,11 +284,92 @@ static NSString *PLIST_OAUTH_CID = @"SoqlXOAuthConsumerKey";
 
 -(void)openOAuthResponse:(NSURL *)url apiVersion:(int)apiVersion {
     ZKSforceClient *c = [self newClient:apiVersion];
-    NSError *err = [c loginFromOAuthCallbackUrl:url.absoluteString oAuthConsumerKey:[ZKLoginController oauthConsumerKey]];
+    if (url.fragment.length > 0) {
+        // legacy user-agent flow response, tokens are in the fragment.
+        NSError *err = [c loginFromOAuthCallbackUrl:url.absoluteString oAuthConsumerKey:[ZKLoginController oauthConsumerKey]];
+        if (err != nil) {
+            [[NSAlert alertWithError:err] runModal];
+            return;
+        }
+        [self verifyOAuthLogin:c];
+        return;
+    }
+    // web server flow, we get a code in the query which we exchange for tokens.
+    NSError *err = nil;
+    NSDictionary *params = [ZKOAuthInfo decodeParams:url.query error:&err];
     if (err != nil) {
         [[NSAlert alertWithError:err] runModal];
         return;
     }
+    NSString *code = params[@"code"];
+    if (code.length == 0 || self.pkceVerifier == nil || self.pendingAuthHost == nil) {
+        [self.state setError:@"The login response didn't match a login that this window started. Please try the login again."];
+        return;
+    }
+    NSString *verifier = self.pkceVerifier;
+    NSURL *authHost = self.pendingAuthHost;
+    self.pkceVerifier = nil;
+    self.pendingAuthHost = nil;
+    [self.state setWorking:@"Exchanging authorization code for tokens"];
+
+    NSURL *tokenUrl = [NSURL URLWithString:@"/services/oauth2/token" relativeToURL:authHost];
+    NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:tokenUrl];
+    req.HTTPMethod = @"POST";
+    NSString *body = [NSString stringWithFormat:@"grant_type=authorization_code&code=%@&client_id=%@&redirect_uri=%@&code_verifier=%@",
+                      formEncode(code),
+                      formEncode([ZKLoginController oauthConsumerKey]),
+                      formEncode(OAUTH_CALLBACK),
+                      formEncode(verifier)];
+    req.HTTPBody = [body dataUsingEncoding:NSUTF8StringEncoding];
+    [req addValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
+    [req addValue:@"application/json" forHTTPHeaderField:@"Accept"];
+
+    NSURLSessionDataTask *t = [[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSString *failure = nil;
+        NSDictionary *tokens = nil;
+        if (error != nil) {
+            failure = error.localizedDescription;
+        } else {
+            id json = data.length > 0 ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+            if ([json isKindOfClass:[NSDictionary class]]) {
+                tokens = json;
+                if (tokens[@"error"] != nil) {
+                    failure = [NSString stringWithFormat:@"%@ : %@", tokens[@"error"], tokens[@"error_description"]];
+                } else if (![tokens[@"access_token"] isKindOfClass:[NSString class]] || ![tokens[@"instance_url"] isKindOfClass:[NSString class]]) {
+                    failure = @"The token response from Salesforce was missing the access token or instance URL";
+                }
+            } else {
+                failure = [NSString stringWithFormat:@"Unexpected response from the token endpoint (HTTP %ld)",
+                           (long)[(NSHTTPURLResponse*)response statusCode]];
+            }
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (failure != nil) {
+                [self.state setError:failure];
+                NSAlert *a = [[NSAlert alloc] init];
+                a.messageText = @"Login failed";
+                a.informativeText = failure;
+                [a runModal];
+                return;
+            }
+            // id is https://{authHost}/id/{orgId}/{userId}; the auth host is what later token refreshes go to.
+            NSString *idUrl = [tokens[@"id"] isKindOfClass:[NSString class]] ? tokens[@"id"] : authHost.absoluteString;
+            NSString *refresh = [tokens[@"refresh_token"] isKindOfClass:[NSString class]] ? tokens[@"refresh_token"] : nil;
+            ZKOAuthInfo *auth = [ZKOAuthInfo oauthInfoWithRefreshToken:refresh
+                                                              authHost:[NSURL URLWithString:idUrl]
+                                                             sessionId:tokens[@"access_token"]
+                                                           instanceUrl:[NSURL URLWithString:tokens[@"instance_url"]]
+                                                              clientId:[ZKLoginController oauthConsumerKey]];
+            auth.apiVersion = apiVersion;
+            c.authenticationInfo = auth;
+            [self verifyOAuthLogin:c];
+        });
+    }];
+    [t resume];
+}
+
+// Checks that the freshly minted OAuth session works, then offers to save it to the keychain.
+-(void)verifyOAuthLogin:(ZKSforceClient *)c {
     // This call is used to validate that we were given a valid client, and that the auth info is usable.
     // This also ensures that the userInfo is cached, which subsequent code relies on.
     [self.state setWorking:@"Verifying OAuth tokens"];

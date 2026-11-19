@@ -67,7 +67,9 @@ with `OAUTH_APPROVAL_ERROR_GENERIC`. You can point SoqlX at a connected app you 
 1. In Setup, App Manager, New Connected App (or New External Client App if that's all your org offers).
    Enable OAuth settings with callback URL `soqlx://oauth/` and the scopes *Manage user data via APIs (api)*,
    *Perform requests at any time (refresh_token, offline_access)* and *Access unique user identifiers (openid)*.
-   Turn **off** *Require Secret for Refresh Token Flow*, since SoqlX has no client secret.
+   Turn **off** both *Require Secret for Web Server Flow* and *Require Secret for Refresh Token Flow*, since
+   SoqlX has no client secret; leave PKCE on. SoqlX uses the OAuth web server flow with PKCE (Salesforce
+   disabled the older user-agent flow in 2026).
 2. Copy the app's Consumer Key, then either put it in `Info.plist` under `SoqlXOAuthConsumerKey` before building,
    or set it at runtime without rebuilding:
 
