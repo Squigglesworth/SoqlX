@@ -39,4 +39,10 @@
     return [NSURL URLWithString:[NSString stringWithFormat:@"https://%@/%@", host, sfId]];
 }
 
++(BOOL)isIdColumn:(NSString *)identifier {
+    if (![identifier isKindOfClass:[NSString class]] || identifier.length == 0) return NO;
+    NSString *last = [identifier componentsSeparatedByString:@"."].lastObject;
+    return [last isEqualToString:@"Id"] || [last hasSuffix:@"Id"];
+}
+
 @end

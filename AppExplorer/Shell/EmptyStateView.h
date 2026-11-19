@@ -28,9 +28,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Setting a string to nil or @"" hides its label.
 @interface EmptyStateView : NSView
 
-@property (copy, nullable) NSString *eyebrow;
-@property (copy, nullable) NSString *title;
-@property (copy, nullable) NSString *body;
+@property (copy, nonatomic, nullable) NSString *eyebrow;
+@property (copy, nonatomic, nullable) NSString *title;
+@property (copy, nonatomic, nullable) NSString *body;
 
 // nil or empty title removes the button.
 -(void)setActionTitle:(nullable NSString *)title target:(nullable id)target action:(nullable SEL)action;

@@ -219,7 +219,9 @@ static NSArray *systemColumnIds;
     NSInteger row = tv.clickedRow;
     NSInteger col = tv.clickedColumn;
     if (row < 0 || col < 0 || col >= (NSInteger)tv.tableColumns.count) return;
-    id value = [self tableView:tv objectValueForTableColumn:tv.tableColumns[col] row:row];
+    NSTableColumn *column = tv.tableColumns[col];
+    if (![SalesforceIds isIdColumn:column.identifier]) return;
+    id value = [self tableView:tv objectValueForTableColumn:column row:row];
     if (![SalesforceIds looksLikeId:value]) return;
     if (self.instanceHost.length == 0) return;
     NSURL *url = [SalesforceIds recordURLForId:value host:self.instanceHost];
@@ -229,7 +231,7 @@ static NSArray *systemColumnIds;
 }
 
 - (NSString *)tableView:(NSTableView *)tv toolTipForCell:(NSCell *)cell rect:(NSRectPointer)rect tableColumn:(NSTableColumn *)tc row:(NSInteger)row mouseLocation:(NSPoint)p {
-    if (tc == nil || row < 0) return nil;
+    if (tc == nil || row < 0 || ![SalesforceIds isIdColumn:tc.identifier]) return nil;
     id value = [self tableView:tv objectValueForTableColumn:tc row:row];
     return [SalesforceIds looksLikeId:value] ? @"⌘-click to open in Salesforce" : nil;
 }

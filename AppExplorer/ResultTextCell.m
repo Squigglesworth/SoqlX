@@ -42,7 +42,7 @@
 }
 
 -(BOOL)isLinkValue {
-    return [SalesforceIds looksLikeId:self.objectValue];
+    return self.linkColumn && [SalesforceIds looksLikeId:self.objectValue];
 }
 
 -(NSAttributedString *)styledValue {
@@ -84,6 +84,11 @@
 
 -(void)drawInteriorWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     NSAttributedString *attributed = [self styledValue];
+    if (self.backgroundStyle == NSBackgroundStyleEmphasized) {
+        NSMutableAttributedString *m = [attributed mutableCopy];
+        [m addAttribute:NSForegroundColorAttributeName value:[NSColor alternateSelectedControlTextColor] range:NSMakeRange(0, m.length)];
+        attributed = m;
+    }
     NSRect r = [self titleRectForBounds:cellFrame];
     void (^draw)(void) = ^{
         CGFloat h = ceil([attributed size].height);

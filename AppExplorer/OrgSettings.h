@@ -23,6 +23,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Posted (on the main thread) after any OrgSettings save or removal; object is the org id.
+extern NSString *const OrgSettingsDidChangeNotification;
+
 typedef NS_ENUM(NSInteger, SXOrgKind) {
     SXOrgKindProduction,
     SXOrgKindSandbox,

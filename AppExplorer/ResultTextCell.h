@@ -26,5 +26,7 @@
 
 // YES if the cell's current objectValue looks like a Salesforce Id.
 -(BOOL)isLinkValue;
+// Set by the table for columns that hold Ids; only those draw link styling.
+@property (assign, nonatomic) BOOL linkColumn;
 
 @end

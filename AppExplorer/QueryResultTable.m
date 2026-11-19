@@ -28,6 +28,8 @@
 #import "TStamp.h"
 #import "ZKQueryResult+Display.h"
 #import "ResultTextCell.h"
+#import "SalesforceIds.h"
+#import "DesignTokens.h"
 #import "DesignTokens.h"
 
 
@@ -173,8 +175,6 @@ const NSInteger DEF_ID_WIDTH = 165;
     [wrapper setDelegate:delegate];
     table.delegate = wrapper;
     table.dataSource = wrapper;
-    table.target = wrapper;
-    table.action = @selector(tableClicked:);
     [self showHideErrorColumn];
 }
 
@@ -291,6 +291,7 @@ const NSInteger DEF_ID_WIDTH = 165;
     c.editable = YES;
     ResultTextCell *cell = [[ResultTextCell alloc] initTextCell:@""];
     [cell setEditable:YES];
+    cell.linkColumn = [SalesforceIds isIdColumn:identifier];
     c.dataCell = cell;
     c.minWidth = MIN_WIDTH;
     c.width = width;
@@ -484,11 +485,9 @@ const NSInteger DEF_ID_WIDTH = 165;
 }
 
 -(NSFont*)tableCellFont {
-    // TODO, better answer to this?
-    NSTableColumn *dummy = [[NSTableColumn alloc] init];
-    NSCell *dummyCell = dummy.dataCell;
-    NSFont *font = dummyCell.font;
-    return font;
+    // Columns are measured in the font most cells draw with (Ids, numbers, dates are mono data;
+    // free text is the sans body at the same size).
+    return [SXTokens data];
 }
 
 @end

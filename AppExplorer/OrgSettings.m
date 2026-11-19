@@ -21,6 +21,7 @@
 
 #import "OrgSettings.h"
 
+NSString *const OrgSettingsDidChangeNotification = @"OrgSettingsDidChangeNotification";
 static NSString *const kOrgSettingsKey = @"OrgSettings";
 static NSString *const kLabelKey = @"label";
 static NSString *const kColorHexKey = @"colorHex";
@@ -128,6 +129,7 @@ SXOrgKind SXOrgKindFromWord(NSString *word, BOOL *ok) {
         kReadOnlyKey: @(self.readOnly)
     };
     [OrgSettingsDefaults() setObject:all forKey:kOrgSettingsKey];
+    [[NSNotificationCenter defaultCenter] postNotificationName:OrgSettingsDidChangeNotification object:self.orgId];
 }
 
 +(void)removeSettingsForOrgId:(NSString *)orgId {

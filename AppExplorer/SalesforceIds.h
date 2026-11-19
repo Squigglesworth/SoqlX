@@ -26,6 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // YES if value is an NSString of 15 or 18 ASCII letters/digits.
 +(BOOL)looksLikeId:(nullable id)value;
+// YES for column identifiers that hold Ids: "Id", or any path whose last segment ends in "Id".
++(BOOL)isIdColumn:(nullable NSString *)identifier;
 
 // https://<host>/<id>, or nil if either is nil/empty.
 +(nullable NSURL *)recordURLForId:(nullable NSString *)sfId host:(nullable NSString *)host;

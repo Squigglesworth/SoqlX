@@ -136,6 +136,10 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [progress setUsesThreadedAnimation:YES];
     describeList.doubleAction = @selector(describeItemClicked:);    
     rootTableView.target = self;
+    rootTableView.action = @selector(resultsTableClicked:);
+    childTableView.target = self;
+    childTableView.action = @selector(childResultsTableClicked:);
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orgSettingsChanged:) name:OrgSettingsDidChangeNotification object:nil];
     rootTableView.doubleAction = @selector(queryResultDoubleClicked:);
     self.rootResults = [[QueryResultTable alloc] initForTableView:rootTableView];
     self.rootResults.delegate = self;
@@ -171,6 +175,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:PREF_SOQL_POPUP_COMPLETIONS];
     if (self.observingDeleteTitle) {
         [self removeObserver:self forKeyPath:@"deleteButtonTitle" context:kQueryChromeContext];
+        [self removeObserver:self forKeyPath:@"hasSelectedForDelete" context:kQueryChromeContext];
     }
     NSLog(@"Explorer dealloc");
 }
@@ -353,6 +358,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [self didChangeValueForKey:@"isLoggedIn"];
     [self.rootResults setQueryResult:nil];
     [self.childResults setQueryResult:nil];
+    [self showEmptyStateTitle:@"No query run yet" body:@"Write a query above and press ⌘R, or pick one from Query, Insert Snippet."];
 
     [sforce describeGlobalThemeWithFailBlock:^(NSError *result) {
         [[NSAlert alertWithError:result] runModal];
@@ -833,6 +839,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
         [self.queryMoreButton bind:NSEnabledBinding toObject:self withKeyPath:@"isQuerying" options:@{NSValueTransformerNameBindingOption: NSNegateBooleanTransformerName}];
         [self.deleteButton bind:NSEnabledBinding toObject:self withKeyPath:@"hasSelectedForDelete" options:nil];
         [self addObserver:self forKeyPath:@"deleteButtonTitle" options:NSKeyValueObservingOptionInitial context:kQueryChromeContext];
+        [self addObserver:self forKeyPath:@"hasSelectedForDelete" options:0 context:kQueryChromeContext];
         self.observingDeleteTitle = YES;
 
         EmptyStateView *empty = [[EmptyStateView alloc] initWithFrame:resultsScroll.frame];
@@ -945,6 +952,23 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
             break;
         default: [soqlSchemaTabs selectTabViewItemWithIdentifier:soqlTabId]; break;
     }
+}
+
+// Single clicks on the results tables go to the wrapper for ⌘-click record links; double clicks
+// keep their existing doubleAction on the Explorer.
+- (void)resultsTableClicked:(id)sender {
+    [self.rootResults.wrapper tableClicked:sender];
+}
+
+- (void)childResultsTableClicked:(id)sender {
+    [self.childResults.wrapper tableClicked:sender];
+}
+
+// Per-org safety settings changed (Settings > Connections): re-evaluate everything derived from them.
+- (void)orgSettingsChanged:(NSNotification *)n {
+    [self willChangeValueForKey:@"orgInfo"];
+    [self didChangeValueForKey:@"orgInfo"];
+    [self updateOrgChip];
 }
 
 - (void)toggleRecentPanel:(id)sender {
@@ -1201,6 +1225,8 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
         [self colorize];
     } else if (context == kQueryChromeContext) {
         if (self.deleteButton != nil) {
+            // the binding may update enabled after this fires; set it here so the title colour matches.
+            self.deleteButton.enabled = self.hasSelectedForDelete;
             [SXControls setTitle:self.deleteButtonTitle onButton:self.deleteButton];
             [self.deleteButton sizeToFit];
             NSRect f = self.deleteButton.frame;
@@ -1225,7 +1251,8 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
     }
     NSUInteger count = self.rootResults.checkedRowCount;
     if (count == 0) return;
-    NSString *objectName = [self.rootResults.queryResult.records.firstObject type] ?: @"";
+    ZKSObject *first = self.rootResults.queryResult.records.firstObject;
+    NSString *objectName = first.type ?: @"";
     SXOrgKind kind = self.orgInfo == nil ? SXOrgKindProduction : [[self currentOrgSettings] effectiveKindFor:self.orgInfo];
     if (kind == SXOrgKindTrial) {
         kind = SXOrgKindProduction;   // a trial counts as Production for the safety rules

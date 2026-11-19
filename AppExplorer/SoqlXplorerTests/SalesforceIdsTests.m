@@ -49,4 +49,14 @@
     XCTAssertNil([SalesforceIds recordURLForId:nil host:@"na1.salesforce.com"]);
 }
 
+-(void)testIsIdColumn {
+    XCTAssertTrue([SalesforceIds isIdColumn:@"Id"]);
+    XCTAssertTrue([SalesforceIds isIdColumn:@"OwnerId"]);
+    XCTAssertTrue([SalesforceIds isIdColumn:@"Account.OwnerId"]);
+    XCTAssertFalse([SalesforceIds isIdColumn:@"Name"]);
+    XCTAssertFalse([SalesforceIds isIdColumn:@"Account.Name"]);
+    XCTAssertFalse([SalesforceIds isIdColumn:@""]);
+    XCTAssertFalse([SalesforceIds isIdColumn:nil]);
+}
+
 @end

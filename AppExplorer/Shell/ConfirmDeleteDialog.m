@@ -97,6 +97,10 @@ static const void *kDelegateKey = &kDelegateKey;
         objc_setAssociatedObject(alert, kDelegateKey, fieldDelegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [alert layout];
         alert.window.initialFirstResponder = field;
+    } else {
+        // Without the typed phrase, Return must not delete: give it to Cancel.
+        deleteButton.keyEquivalent = @"";
+        cancelButton.keyEquivalent = @"\r";
     }
 
     [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {

@@ -32,6 +32,7 @@
 @end
 
 @implementation EmptyStateView
+@synthesize eyebrow = _eyebrow;
 
 -(instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];

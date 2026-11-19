@@ -51,10 +51,10 @@ static const void *kSXVariantKey = &kSXVariantKey;
 +(void)setTitle:(NSString *)title onButton:(NSButton *)button {
     switch ([self variantOfButton:button]) {
         case SXButtonVariantPrimary:
-            button.attributedTitle = [self centredTitle:title color:[SXTokens onAccent]];
+            button.attributedTitle = [self centredTitle:title color:button.enabled ? [SXTokens onAccent] : [SXTokens inkSubtle]];
             break;
         case SXButtonVariantDanger:
-            button.attributedTitle = [self centredTitle:title color:[SXTokens onDanger]];
+            button.attributedTitle = [self centredTitle:title color:button.enabled ? [SXTokens onDanger] : [SXTokens inkSubtle]];
             break;
         case SXButtonVariantGhost:
         case SXButtonVariantDefault:
