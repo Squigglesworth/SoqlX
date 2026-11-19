@@ -101,6 +101,8 @@
 
 @property (strong) NSString *statusText;
 @property (strong) NSString *apiCallCountText;
+// Fraction (0..1) of the org's daily API request limit that has been used, for the status bar meter.
+@property (assign) double apiCallsFraction;
 @property (assign) BOOL schemaViewIsActive;
 @property (strong) NSString *selectedTabViewIdentifier;
 

@@ -15,10 +15,10 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <menu title="MainMenu" systemMenu="main" id="29" userLabel="MainMenu">
             <items>
-                <menuItem title="SoqlXplorer" id="56">
-                    <menu key="submenu" title="SoqlXplorer" systemMenu="apple" id="57">
+                <menuItem title="SoqlX Rebooted" id="56">
+                    <menu key="submenu" title="SoqlX Rebooted" systemMenu="apple" id="57">
                         <items>
-                            <menuItem title="About SoqlXplorer" id="58">
+                            <menuItem title="About SoqlX Rebooted" id="58">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="orderFrontStandardAboutPanel:" target="-2" id="142"/>
@@ -41,7 +41,7 @@
                             <menuItem isSeparatorItem="YES" id="144">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Hide SoqlXplorer" keyEquivalent="h" id="134">
+                            <menuItem title="Hide SoqlX Rebooted" keyEquivalent="h" id="134">
                                 <connections>
                                     <action selector="hide:" target="-2" id="152"/>
                                 </connections>
@@ -60,7 +60,7 @@
                             <menuItem isSeparatorItem="YES" id="149">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Quit SoqlXplorer" keyEquivalent="q" id="136">
+                            <menuItem title="Quit SoqlX Rebooted" keyEquivalent="q" id="136">
                                 <connections>
                                     <action selector="terminate:" target="-2" id="139"/>
                                 </connections>
@@ -286,6 +286,38 @@
                                     <connections>
                                         <outlet property="delegate" destination="1677" id="snp-ou-d01"/>
                                     </connections>
+                                </menu>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="View" id="vw-mi-t01">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="View" id="vw-mn-u01">
+                        <items>
+                            <menuItem title="Appearance" id="vw-ap-t01">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Appearance" id="vw-ap-m01">
+                                    <items>
+                                        <menuItem title="Match System" tag="0" id="vw-ap-i00">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="setAppearanceFromMenu:" target="1677" id="vw-ap-a00"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Light" tag="1" id="vw-ap-i01">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="setAppearanceFromMenu:" target="1677" id="vw-ap-a01"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Dark" tag="2" id="vw-ap-i02">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="setAppearanceFromMenu:" target="1677" id="vw-ap-a02"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
                                 </menu>
                             </menuItem>
                         </items>

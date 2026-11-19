@@ -145,8 +145,10 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     ZKLimitInfoHeader *h = c.lastLimitInfoHeader;
     ZKLimitInfo *api = [h limitInfoOfType:@"API REQUESTS"];
     NSString *newVal = (api == nil) ? nil : [NSString stringWithFormat:@"Org API calls %ld/%ld", (long)[api current], (long)[api limit]];
+    double fraction = (api == nil || [api limit] <= 0) ? 0 : (double)[api current] / (double)[api limit];
     dispatch_async(dispatch_get_main_queue(), ^{
         self.apiCallCountText = newVal;
+        self.apiCallsFraction = fraction;
     });
 }
 
@@ -633,7 +635,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 }
 
 -(NSString *)titleUserInfo {
-    NSString *doc = @"SoqlX";
+    NSString *doc = @"SoqlX Rebooted";
     if ([self.selectedTabViewIdentifier isEqualToString:soqlTabId] && self.queryFilename != nil) {
         doc = self.queryFilename.lastPathComponent;
         doc = [doc substringToIndex:doc.length - self.queryFilename.pathExtension.length - 1];

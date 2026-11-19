@@ -32,3 +32,4 @@ NSString *PREF_SOQL_SYNTAX_HIGHLIGHTING = @"SoqlColoring";
 NSString *PREF_SOQL_POPUP_COMPLETIONS = @"SoqlCompletions";
 NSString *PREF_SOQL_UPPERCASE_KEYWORDS = @"SoqlUppercaseKeywords";
 NSString *PREF_BRACES_MISMATCH_BEEP = @"BracesMismatchBeep";
+NSString *PREF_APPEARANCE = @"Appearance";

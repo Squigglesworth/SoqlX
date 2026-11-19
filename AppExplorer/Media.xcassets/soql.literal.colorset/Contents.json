@@ -1,56 +1,56 @@
 {
-  "colors" : [
+  "info": {
+    "author": "xcode",
+    "version": 1
+  },
+  "colors": [
     {
-      "color" : {
-        "color-space" : "display-p3",
-        "components" : {
-          "alpha" : "1.000",
-          "blue" : "0.272",
-          "green" : "0.795",
-          "red" : "0.000"
+      "idiom": "universal",
+      "color": {
+        "color-space": "srgb",
+        "components": {
+          "red": "0.596",
+          "green": "0.227",
+          "blue": "0.165",
+          "alpha": "1.000"
         }
-      },
-      "idiom" : "universal"
+      }
     },
     {
-      "appearances" : [
-        {
-          "appearance" : "luminosity",
-          "value" : "light"
-        }
-      ],
-      "color" : {
-        "color-space" : "display-p3",
-        "components" : {
-          "alpha" : "1.000",
-          "blue" : "0.198",
-          "green" : "0.562",
-          "red" : "0.002"
+      "idiom": "universal",
+      "color": {
+        "color-space": "srgb",
+        "components": {
+          "red": "0.596",
+          "green": "0.227",
+          "blue": "0.165",
+          "alpha": "1.000"
         }
       },
-      "idiom" : "universal"
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "light"
+        }
+      ]
     },
     {
-      "appearances" : [
-        {
-          "appearance" : "luminosity",
-          "value" : "dark"
-        }
-      ],
-      "color" : {
-        "color-space" : "display-p3",
-        "components" : {
-          "alpha" : "1.000",
-          "blue" : "0.272",
-          "green" : "0.795",
-          "red" : "0.000"
+      "idiom": "universal",
+      "color": {
+        "color-space": "srgb",
+        "components": {
+          "red": "0.910",
+          "green": "0.627",
+          "blue": "0.561",
+          "alpha": "1.000"
         }
       },
-      "idiom" : "universal"
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "dark"
+        }
+      ]
     }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
+  ]
 }

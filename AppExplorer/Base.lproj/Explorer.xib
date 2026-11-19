@@ -926,9 +926,17 @@ DQ
                             <action selector="filterSObjectListView:" target="218" id="1409"/>
                         </connections>
                     </searchField>
+                    <levelIndicator verticalHuggingPriority="750" fixedFrame="YES" toolTip="Share of the org's daily API request limit used" translatesAutoresizingMaskIntoConstraints="NO" id="api-lv-ind" userLabel="ApiCallsMeter">
+                        <rect key="frame" x="575" y="8" width="110" height="12"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <levelIndicatorCell key="cell" alignment="left" maxValue="1" warningValue="0.75" criticalValue="0.90000000000000002" levelIndicatorStyle="continuousCapacity" id="api-lv-cel"/>
+                        <connections>
+                            <binding destination="218" name="value" keyPath="apiCallsFraction" id="api-lv-bnd"/>
+                        </connections>
+                    </levelIndicator>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1671">
                         <rect key="frame" x="695" y="7" width="300" height="14"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="API Calls" id="1672">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>

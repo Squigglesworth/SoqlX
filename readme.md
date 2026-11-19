@@ -1,6 +1,6 @@
-# SoqlX
+# SoqlX Rebooted
 
-SoqlX is a tool for developers using the Salesforce.com platform, it allows you to easily explore your schema,
+SoqlX Rebooted is a fork of Simon Fell's [SoqlX](https://github.com/superfell/SoqlX), a tool for developers using the Salesforce.com platform, it allows you to easily explore your schema,
 write and run SOQL queries, make edits to data, and to run Apex code.
 
 

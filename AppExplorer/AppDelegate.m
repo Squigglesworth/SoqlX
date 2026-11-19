@@ -30,6 +30,7 @@
 #import "Defaults.h"
 #import "TStamp.h"
 #import "SnippetLibrary.h"
+#import "DesignTokens.h"
 
 @interface ZKOAuthInfo(params)
 +(NSDictionary*)decodeParams:(NSString*)fragment error:(NSError **)err;
@@ -58,6 +59,7 @@
     defaults[PREF_SOQL_POPUP_COMPLETIONS] = @YES;
     defaults[PREF_SOQL_UPPERCASE_KEYWORDS] = @YES;
     defaults[PREF_BRACES_MISMATCH_BEEP] = @YES;
+    defaults[PREF_APPEARANCE] = @"system";
     defaults[DEF_LOGIN_MRU] = @[];
     
     NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
@@ -73,9 +75,43 @@
         [NSFont setUserFixedPitchFont:font];
         [defs setObject:@0 forKey:PREF_TEXT_SIZE];
     } else {
+        // AppKit stores the user's fixed pitch font choice under NSFixedPitchFont. If there isn't one,
+        // the user has never picked a font, so default to the design system's code face.
+        if ([defs objectForKey:@"NSFixedPitchFont"] == nil && [SXTokens bundledFontsAvailable]) {
+            [NSFont setUserFixedPitchFont:[SXTokens code]];
+        }
         font = [NSFont userFixedPitchFontOfSize:0];
         NSLog(@"Using edit font %@", font);
     }
+}
+
+// MARK: - Appearance
+
++(void)applyAppearancePreference {
+    NSString *pref = [[NSUserDefaults standardUserDefaults] stringForKey:PREF_APPEARANCE];
+    NSAppearance *a = nil;
+    if ([pref isEqualToString:@"light"]) {
+        a = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    } else if ([pref isEqualToString:@"dark"]) {
+        a = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+    }
+    NSApp.appearance = a;   // nil follows the system setting
+}
+
+- (IBAction)setAppearanceFromMenu:(id)sender {
+    NSInteger tag = [sender respondsToSelector:@selector(tag)] ? [sender tag] : 0;
+    NSString *pref = tag == 1 ? @"light" : tag == 2 ? @"dark" : @"system";
+    [[NSUserDefaults standardUserDefaults] setObject:pref forKey:PREF_APPEARANCE];
+    [AppDelegate applyAppearancePreference];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
+    if (item.action == @selector(setAppearanceFromMenu:)) {
+        NSString *pref = [[NSUserDefaults standardUserDefaults] stringForKey:PREF_APPEARANCE];
+        NSInteger current = [pref isEqualToString:@"light"] ? 1 : [pref isEqualToString:@"dark"] ? 2 : 0;
+        item.state = item.tag == current ? NSControlStateValueOn : NSControlStateValueOff;
+    }
+    return YES;
 }
 
 -(instancetype)init {
@@ -273,6 +309,10 @@
             NSLog(@"Unexpected URL received %@", url.absoluteString);
         }
     }
+}
+
+-(void)applicationWillFinishLaunching:(NSNotification *)notification {
+    [AppDelegate applyAppearancePreference];
 }
 
 -(void)applicationDidFinishLaunching:(NSNotification *)notification {

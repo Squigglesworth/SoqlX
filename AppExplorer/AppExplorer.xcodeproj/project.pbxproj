@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F6000000000D42 /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D41 /* Fonts */; };
+		A1B2C3D4E5F6000000000D53 /* DesignTokens.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D52 /* DesignTokens.m */; };
+		A1B2C3D4E5F6000000000D54 /* DesignTokens.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D52 /* DesignTokens.m */; };
 		A1B2C3D4E5F6000000000D03 /* SoqlDocs.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D02 /* SoqlDocs.m */; };
 		A1B2C3D4E5F6000000000D04 /* SoqlDocs.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D02 /* SoqlDocs.m */; };
 		A1B2C3D4E5F6000000000D13 /* SnippetLibrary.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D12 /* SnippetLibrary.m */; };
@@ -21,7 +24,6 @@
 		F412575D0B098593001622AC /* WeightedSObject.m in Sources */ = {isa = PBXBuildFile; fileRef = F412575B0B098593001622AC /* WeightedSObject.m */; };
 		F412DE1721B341D300D8889F /* SessionIdAuthInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = F412DE1621B341D300D8889F /* SessionIdAuthInfo.m */; };
 		F413C6540AACABD5000A8CDC /* DataSources.m in Sources */ = {isa = PBXBuildFile; fileRef = F413C6530AACABD5000A8CDC /* DataSources.m */; };
-		F413C7260AACB9B4000A8CDC /* sf.icns in Resources */ = {isa = PBXBuildFile; fileRef = F413C7250AACB9B4000A8CDC /* sf.icns */; };
 		F424A81D262B595C00AD4F42 /* SoqlTokenizer.m in Sources */ = {isa = PBXBuildFile; fileRef = F424A81C262B595C00AD4F42 /* SoqlTokenizer.m */; };
 		F424A81E262B595C00AD4F42 /* SoqlTokenizer.m in Sources */ = {isa = PBXBuildFile; fileRef = F424A81C262B595C00AD4F42 /* SoqlTokenizer.m */; };
 		F424A837262BCF1B00AD4F42 /* ColorizerStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = F424A836262BCF1B00AD4F42 /* ColorizerStyle.m */; };
@@ -260,6 +262,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4E5F6000000000D41 /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D51 /* DesignTokens.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DesignTokens.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000D52 /* DesignTokens.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DesignTokens.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D01 /* SoqlDocs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SoqlDocs.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D02 /* SoqlDocs.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SoqlDocs.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D11 /* SnippetLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SnippetLibrary.h; sourceTree = "<group>"; };
@@ -534,6 +539,8 @@
 				A1B2C3D4E5F6000000000D11 /* SnippetLibrary.h */,
 				A1B2C3D4E5F6000000000D12 /* SnippetLibrary.m */,
 				A1B2C3D4E5F6000000000D21 /* snippets.json */,
+				A1B2C3D4E5F6000000000D51 /* DesignTokens.h */,
+				A1B2C3D4E5F6000000000D52 /* DesignTokens.m */,
 				F494FA3C0F7EFDD2001216EC /* GlossShader */,
 				F4B8AFC518A8540800FE114F /* IconProvider.h */,
 				F48B6B8A1969E68700496C82 /* Prefs.h */,
@@ -623,6 +630,7 @@
 			isa = PBXGroup;
 			children = (
 				F4D1B520270685D100EEE8BD /* delete.png */,
+				A1B2C3D4E5F6000000000D41 /* Fonts */,
 				F4E3194C2198EF4E009B8C4F /* ProgressWindow.xib */,
 				F4E319432198ECE3009B8C4F /* querySavePanel.xib */,
 				F4E319472198ECE3009B8C4F /* ReportDocument.xib */,
@@ -1012,7 +1020,7 @@
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
 				F4C8BF332197C5740000E312 /* Credits.rtf in Resources */,
 				A1B2C3D4E5F6000000000D22 /* snippets.json in Resources */,
-				F413C7260AACB9B4000A8CDC /* sf.icns in Resources */,
+				A1B2C3D4E5F6000000000D42 /* Fonts in Resources */,
 				F4BBAA152186C3E100647C27 /* Media.xcassets in Resources */,
 				F4E319492198ECE3009B8C4F /* querySavePanel.xib in Resources */,
 				F4E3194B2198ECE3009B8C4F /* ReportDocument.xib in Resources */,
@@ -1199,6 +1207,7 @@
 				F4AC556D15996D8500F5CA45 /* zkRunTestResult.m in Sources */,
 				F4DF0B4F26388CFF00B3A1A9 /* SoqlFunction.m in Sources */,
 				A1B2C3D4E5F6000000000D03 /* SoqlDocs.m in Sources */,
+				A1B2C3D4E5F6000000000D53 /* DesignTokens.m in Sources */,
 				A1B2C3D4E5F6000000000D13 /* SnippetLibrary.m in Sources */,
 				F4D7831E15D49F7B00D00BB9 /* AppDelegate.m in Sources */,
 				F4D7833415D5F46600D00BB9 /* BaseUserBasedController.m in Sources */,
@@ -1220,6 +1229,7 @@
 			files = (
 				F4DF0B5F2638BDA100B3A1A9 /* SoqlFunction.m in Sources */,
 				A1B2C3D4E5F6000000000D04 /* SoqlDocs.m in Sources */,
+				A1B2C3D4E5F6000000000D54 /* DesignTokens.m in Sources */,
 				A1B2C3D4E5F6000000000D14 /* SnippetLibrary.m in Sources */,
 				A1B2C3D4E5F6000000000D32 /* HelpDocsTests.m in Sources */,
 				F4408FF02562F4C1005E8BB7 /* QueryColumns.m in Sources */,
@@ -1344,6 +1354,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = Info.plist;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -1366,6 +1377,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = Info.plist;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

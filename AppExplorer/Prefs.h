@@ -54,3 +54,6 @@ extern NSString *PREF_SOQL_UPPERCASE_KEYWORDS;
 
 // Should the apex editor beep when it determines there's a brace character mismatch?
 extern NSString *PREF_BRACES_MISMATCH_BEEP;
+
+// Appearance: "system", "light" or "dark".
+extern NSString *PREF_APPEARANCE;
