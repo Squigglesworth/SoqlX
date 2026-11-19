@@ -58,6 +58,26 @@ prebuilt Sparkle framework's signature doesn't match an ad hoc signed app):
     scripts/run-debug.sh
 ```
 
+## Using your own connected app
+
+SoqlX logs in through a Salesforce connected app using the OAuth user-agent flow. Since September 2025
+Salesforce blocks connected apps that aren't installed in an org, so the original SoqlX app may be refused
+with `OAUTH_APPROVAL_ERROR_GENERIC`. You can point SoqlX at a connected app you own instead:
+
+1. In Setup, App Manager, New Connected App (or New External Client App if that's all your org offers).
+   Enable OAuth settings with callback URL `soqlx://oauth/` and the scopes *Manage user data via APIs (api)*,
+   *Perform requests at any time (refresh_token, offline_access)* and *Access unique user identifiers (openid)*.
+   Turn **off** *Require Secret for Refresh Token Flow*, since SoqlX has no client secret.
+2. Copy the app's Consumer Key, then either put it in `Info.plist` under `SoqlXOAuthConsumerKey` before building,
+   or set it at runtime without rebuilding:
+
+```bash
+    defaults write com.pocketsoap.osx.SoqlXplorer OAuthConsumerKey 'YOUR-CONSUMER-KEY'
+```
+
+Saved logins are tied to the consumer key they were created with, so after switching you log in again once.
+To go back to the built-in key: `defaults delete com.pocketsoap.osx.SoqlXplorer OAuthConsumerKey`.
+
 ## Logging in when OAuth is blocked
 
 Since September 2025 Salesforce blocks connected apps that haven't been installed in the org, which

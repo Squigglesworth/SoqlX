@@ -129,6 +129,8 @@
 	</array>
 	<key>ZKHelpLoginUrl</key>
 	<string>https://superfell.com/osx/soqlx/help/4.2/#Login</string>
+	<key>SoqlXOAuthConsumerKey</key>
+	<string></string>
 	<key>ZKHelpUrl</key>
 	<string>https://superfell.com/osx/soqlx/help/4.2/</string>
 </dict>

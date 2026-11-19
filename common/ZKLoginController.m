@@ -182,14 +182,33 @@ int DEFAULT_API_VERSION = 58;
     return c;
 }
 
-static NSString *OAUTH_CID = @"3MVG99OxTyEMCQ3hP1_9.Mh8dFxOk8gk6hPvwEgSzSxOs3HoHQhmqzBxALj8UBnhjzntUVXdcdZFXATXCdevs";
+// The consumer key of the original SoqlX connected app, used unless overridden.
+static NSString *DEFAULT_OAUTH_CID = @"3MVG99OxTyEMCQ3hP1_9.Mh8dFxOk8gk6hPvwEgSzSxOs3HoHQhmqzBxALj8UBnhjzntUVXdcdZFXATXCdevs";
+static NSString *PREF_OAUTH_CID = @"OAuthConsumerKey";
+static NSString *PLIST_OAUTH_CID = @"SoqlXOAuthConsumerKey";
+
++(NSString*)oauthConsumerKey {
+    NSCharacterSet *ws = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *k = [[[NSUserDefaults standardUserDefaults] stringForKey:PREF_OAUTH_CID] stringByTrimmingCharactersInSet:ws];
+    if (k.length > 0) {
+        return k;
+    }
+    id plistKey = [[NSBundle mainBundle] infoDictionary][PLIST_OAUTH_CID];
+    if ([plistKey isKindOfClass:[NSString class]]) {
+        k = [plistKey stringByTrimmingCharactersInSet:ws];
+        if (k.length > 0) {
+            return k;
+        }
+    }
+    return DEFAULT_OAUTH_CID;
+}
 
 -(void)loginTargetSelected:(NSURL *)item {
     NSString *cb = @"soqlx://oauth/";
     // build the URL to the oauth page with our client_id & callback URL set.
     NSCharacterSet *urlcs = [NSCharacterSet URLQueryAllowedCharacterSet];
     NSString *path = [NSString stringWithFormat:@"/services/oauth2/authorize?response_type=token&client_id=%@&redirect_uri=%@&state=%@",
-                       [OAUTH_CID stringByAddingPercentEncodingWithAllowedCharacters:urlcs],
+                       [[ZKLoginController oauthConsumerKey] stringByAddingPercentEncodingWithAllowedCharacters:urlcs],
                        [cb stringByAddingPercentEncodingWithAllowedCharacters:urlcs],
                        [self.controllerId stringByAddingPercentEncodingWithAllowedCharacters:urlcs]];
     NSURL *url = [NSURL URLWithString:path relativeToURL:item];
@@ -222,7 +241,7 @@ static NSString *OAUTH_CID = @"3MVG99OxTyEMCQ3hP1_9.Mh8dFxOk8gk6hPvwEgSzSxOs3HoH
 
 -(void)openOAuthResponse:(NSURL *)url apiVersion:(int)apiVersion {
     ZKSforceClient *c = [self newClient:apiVersion];
-    NSError *err = [c loginFromOAuthCallbackUrl:url.absoluteString oAuthConsumerKey:OAUTH_CID];
+    NSError *err = [c loginFromOAuthCallbackUrl:url.absoluteString oAuthConsumerKey:[ZKLoginController oauthConsumerKey]];
     if (err != nil) {
         [[NSAlert alertWithError:err] runModal];
         return;
@@ -305,7 +324,7 @@ static NSString *OAUTH_CID = @"3MVG99OxTyEMCQ3hP1_9.Mh8dFxOk8gk6hPvwEgSzSxOs3HoH
     ZKSforceClient *c = [self newClient:self.preferedApiVersion];
     [c loginWithRefreshToken:cred.token
                      authUrl:cred.server
-            oAuthConsumerKey:OAUTH_CID
+            oAuthConsumerKey:[ZKLoginController oauthConsumerKey]
                    failBlock:failBlock
                completeBlock:^{
         [self oauthCurrentUserInfoWithDowngrade:c

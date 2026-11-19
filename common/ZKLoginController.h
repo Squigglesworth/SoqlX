@@ -38,6 +38,11 @@ extern int DEFAULT_API_VERSION;
 @interface ZKLoginController : NSObject<LoginTargetControllerDelegate, LoginRowViewItemDelegate>
 +(NSString*)appClientId;
 
+// The OAuth consumer key (client id) of the connected app used to log in. In order of
+// preference: the OAuthConsumerKey user default, the SoqlXOAuthConsumerKey Info.plist
+// entry, then the built-in key of the original SoqlX connected app.
++(NSString*)oauthConsumerKey;
+
 -(void)showLoginSheet:(NSWindow *)modalForWindow;
 -(void)loginWithOAuthToken:(Credential*)cred window:(NSWindow*)modalForWindow;
 -(void)completeOAuthLogin:(NSURL *)oauthCallbackUrl window:(NSWindow*)modalForWindow;
