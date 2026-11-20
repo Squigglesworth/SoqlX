@@ -45,3 +45,6 @@ The SOQL engine (parser, tokenizer, completions) is not changed by this work.
 - Release plumbing: own bundle identifier, Sparkle 2 feed and EdDSA keys, Apple Developer
   signing and notarization, full OFL licence text for the bundled fonts, connected app for
   public distribution (orgs must install it), Fragaria submodule deployment target.
+- Field descriptions in the hover: the describe API returns only inline help text. The Description
+  a field has in Setup needs a Tooling API query on FieldDefinition, one call per object.
+- Sidebar: drag a name into the editor; a Custom badge; density and text size (phase 5).

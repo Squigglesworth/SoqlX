@@ -45,6 +45,8 @@
 #import "Shell/SXControls.h"
 #import "Shell/EmptyStateView.h"
 #import "Shell/ConfirmDeleteDialog.h"
+#import "SidebarFilter.h"
+#import "RecentObjects.h"
 
 static const CGFloat kEditorFooterHeight = 36;
 static const CGFloat kResultsFooterHeight = 32;
@@ -421,7 +423,10 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
         selectedFields = [[NSMutableArray alloc] init];
     }
     ZKDescribeSObject * d;
-    id selectedItem = [describeList itemAtRow:describeList.selectedRow];
+    id selectedItem = [descDataSource modelItemForItem:[describeList itemAtRow:describeList.selectedRow]];
+    if (selectedItem == nil) {
+        return; // a group row, or nothing selected
+    }
     
     if ([selectedItem isKindOfClass:[ZKDescribeField class]]) {
         if (![selectedObjectName isEqualToString:((ZKDescribeGlobalSObject *)[selectedItem sobject]).name]) {
@@ -504,8 +509,11 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 }
 
 - (IBAction)selectedSObjectChanged:(id)sender {
-    id selectedItem = [describeList itemAtRow:describeList.selectedRow];
+    id selectedItem = [descDataSource modelItemForItem:[describeList itemAtRow:describeList.selectedRow]];
     DetailDataSource *dataSource = nil;
+    if (selectedItem == nil) {
+        return;
+    }
     if ([selectedItem isKindOfClass:[ZKDescribeGlobalSObject class]]) {
         // sobject
         if (![descDataSource hasDescribe:[selectedItem name]]) {
@@ -527,7 +535,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 }
 
 - (NSString *)selectedSObjectName {
-    id selectedItem = [describeList itemAtRow:describeList.selectedRow];
+    id selectedItem = [descDataSource modelItemForItem:[describeList itemAtRow:describeList.selectedRow]];
     if ([selectedItem isKindOfClass:[NSString class]]) {
         // sobject name
         return selectedItem;
@@ -619,6 +627,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     ZKCompleteQueryResultBlock cb = ^(ZKQueryResult *qr) {
         [self updateProgress:NO];
         self.isQuerying = NO;
+        [self rememberObjectOfQuery:query];
         NSString *time = [self execTimeSince:started];
         self.lastQueryTiming = time;
         if ([qr size] > 0) {
@@ -652,6 +661,18 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     } else {
         [sforce query:query failBlock:[self errorHandler] completeBlock:cb];
     }
+}
+
+// The object a successful query ran against heads the sidebar's Recent group for this org.
+- (void)rememberObjectOfQuery:(NSString *)query {
+    NSString *orgId = self.orgInfo.orgId;
+    NSString *name = [RecentObjects primaryObjectInQuery:query];
+    if (orgId.length == 0 || name.length == 0 || ![descDataSource isTypeDescribable:name]) {
+        return;
+    }
+    [RecentObjects recordName:name forOrgId:orgId];
+    // Defaults observers refresh every window of this org; this one needs no wait.
+    descDataSource.orgId = orgId;
 }
 
 - (IBAction)executeQuery:(id)sender {
@@ -776,11 +797,140 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [self updatePanelToggles];
     [self updateOrgChip];
     [self installQueryChrome];
+    [self installSidebarChrome];
 
     __weak Explorer *weakSelf = self;
     apexController.executionBlockedReason = ^NSString *{
         return weakSelf.writesAllowed ? nil : @"This org is read-only in Settings, so anonymous Apex can't run against it.";
     };
+}
+
+// MARK:- Sidebar chrome (filter field, filter menu)
+
+-(NSSearchField *)findSidebarSearchFieldIn:(NSView *)v {
+    for (NSView *sub in v.subviews) {
+        if ([sub isKindOfClass:[NSSearchField class]] && ((NSSearchField *)sub).action == @selector(filterSObjectListView:)) {
+            return (NSSearchField *)sub;
+        }
+        NSSearchField *f = [self findSidebarSearchFieldIn:sub];
+        if (f != nil) return f;
+    }
+    return nil;
+}
+
+- (void)installSidebarChrome {
+    NSScrollView *treeScroll = describeList.enclosingScrollView;
+    NSView *pane = treeScroll.superview;
+    NSSplitView *split = (NSSplitView *)pane.superview;
+    NSSearchField *search = [self findSidebarSearchFieldIn:self.shell];
+    if (pane == nil || search == nil || ![split isKindOfClass:[NSSplitView class]]) return;
+
+    // The band above the split view held the search field and the old view switcher; both have
+    // moved, so the split view grows up into it.
+    NSView *splitParent = split.superview;
+    NSRect sf = split.frame;
+    sf.size.height = NSHeight(splitParent.bounds) - NSMinY(sf);
+    split.frame = sf;
+
+    // Filter field and filter button pinned to the top of the sidebar pane, tree below.
+    const CGFloat header = SXControlMD + SXSpace2 * 2;
+    NSRect pb = pane.bounds;
+    treeScroll.frame = NSMakeRect(0, 0, NSWidth(pb), NSHeight(pb) - header);
+    treeScroll.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    treeScroll.drawsBackground = YES;
+    treeScroll.backgroundColor = [SXTokens surface];
+
+    NSButton *filterButton = [NSButton buttonWithImage:[NSImage imageWithSystemSymbolName:@"line.3.horizontal.decrease.circle"
+                                                                  accessibilityDescription:@"Filter objects"]
+                                                target:self action:@selector(showSidebarFilterMenu:)];
+    filterButton.bordered = NO;
+    filterButton.toolTip = @"Choose which kinds of objects the list shows";
+    const CGFloat buttonSize = SXControlSM;
+    filterButton.frame = NSMakeRect(NSWidth(pb) - SXSpace2 - buttonSize, NSHeight(pb) - header + (header - buttonSize) / 2, buttonSize, buttonSize);
+    filterButton.autoresizingMask = NSViewMinXMargin | NSViewMinYMargin;
+    [pane addSubview:filterButton];
+    self.sidebarFilterButton = filterButton;
+
+    [search removeFromSuperview];
+    search.controlSize = NSControlSizeRegular;
+    search.font = [SXTokens body];
+    search.placeholderString = @"Filter objects and fields";
+    CGFloat searchHeight = 22;
+    search.frame = NSMakeRect(SXSpace2, NSHeight(pb) - header + (header - searchHeight) / 2,
+                              NSMinX(filterButton.frame) - SXSpace1 - SXSpace2, searchHeight);
+    search.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
+    [pane addSubview:search];
+
+    // The design's sidebar width, unless the user has already sized the split themselves.
+    NSString *autosave = [NSString stringWithFormat:@"NSSplitView Subview Frames %@", split.autosaveName];
+    if (split.autosaveName.length > 0 && [[NSUserDefaults standardUserDefaults] objectForKey:autosave] == nil) {
+        [split setPosition:SXSidebarWidth ofDividerAtIndex:0];
+    }
+    [self updateSidebarFilterButton];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sidebarDefaultsChanged:)
+                                                 name:NSUserDefaultsDidChangeNotification object:nil];
+}
+
+-(void)sidebarDefaultsChanged:(NSNotification *)n {
+    [self updateSidebarFilterButton];
+}
+
+-(SidebarFilter *)currentSidebarFilter {
+    return [SidebarFilter filterFromDefaults:[NSUserDefaults standardUserDefaults]];
+}
+
+-(void)updateSidebarFilterButton {
+    BOOL filtered = ![[self currentSidebarFilter] isDefault];
+    self.sidebarFilterButton.contentTintColor = filtered ? [SXTokens accentInk] : [SXTokens inkMuted];
+}
+
+typedef NS_ENUM(NSInteger, SidebarFilterTag) {
+    SidebarFilterTagStandard = 1, SidebarFilterTagCustom, SidebarFilterTagMetadata,
+    SidebarFilterTagPlatformEvents, SidebarFilterTagSystem, SidebarFilterTagNonQueryable,
+    SidebarFilterTagReset
+};
+
+-(NSMenuItem *)sidebarFilterItem:(NSString *)title tag:(SidebarFilterTag)tag on:(BOOL)on {
+    NSMenuItem *i = [[NSMenuItem alloc] initWithTitle:title action:@selector(toggleSidebarFilter:) keyEquivalent:@""];
+    i.target = self;
+    i.tag = tag;
+    i.state = on ? NSControlStateValueOn : NSControlStateValueOff;
+    return i;
+}
+
+-(IBAction)showSidebarFilterMenu:(id)sender {
+    SidebarFilter *f = [self currentSidebarFilter];
+    NSMenu *m = [[NSMenu alloc] initWithTitle:@"Filter"];
+    m.autoenablesItems = NO;
+    [m addItem:[self sidebarFilterItem:@"Standard objects" tag:SidebarFilterTagStandard on:f.showStandard]];
+    [m addItem:[self sidebarFilterItem:@"Custom objects" tag:SidebarFilterTagCustom on:f.showCustom]];
+    [m addItem:[self sidebarFilterItem:@"Custom metadata types" tag:SidebarFilterTagMetadata on:f.showMetadata]];
+    [m addItem:[self sidebarFilterItem:@"Platform events" tag:SidebarFilterTagPlatformEvents on:f.showPlatformEvents]];
+    [m addItem:[NSMenuItem separatorItem]];
+    [m addItem:[self sidebarFilterItem:@"Show system objects (Feed, History, Share, ChangeEvent)" tag:SidebarFilterTagSystem on:f.showSystem]];
+    [m addItem:[self sidebarFilterItem:@"Show non-queryable objects" tag:SidebarFilterTagNonQueryable on:f.showNonQueryable]];
+    [m addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *reset = [self sidebarFilterItem:@"Reset filters" tag:SidebarFilterTagReset on:NO];
+    reset.enabled = !f.isDefault;
+    [m addItem:reset];
+    NSView *anchor = [sender isKindOfClass:[NSView class]] ? sender : self.sidebarFilterButton;
+    NSPoint below = anchor.isFlipped ? NSMakePoint(0, NSHeight(anchor.bounds) + 2) : NSMakePoint(0, -2);
+    [m popUpMenuPositioningItem:nil atLocation:below inView:anchor];
+}
+
+-(IBAction)toggleSidebarFilter:(NSMenuItem *)sender {
+    SidebarFilter *f = [[self currentSidebarFilter] copy];
+    switch ((SidebarFilterTag)sender.tag) {
+        case SidebarFilterTagStandard:       f.showStandard = !f.showStandard; break;
+        case SidebarFilterTagCustom:         f.showCustom = !f.showCustom; break;
+        case SidebarFilterTagMetadata:       f.showMetadata = !f.showMetadata; break;
+        case SidebarFilterTagPlatformEvents: f.showPlatformEvents = !f.showPlatformEvents; break;
+        case SidebarFilterTagSystem:         f.showSystem = !f.showSystem; break;
+        case SidebarFilterTagNonQueryable:   f.showNonQueryable = !f.showNonQueryable; break;
+        case SidebarFilterTagReset:          f = [SidebarFilter defaultFilter]; break;
+    }
+    // Saving posts NSUserDefaultsDidChangeNotification; every window's sidebar refilters from it.
+    [f saveToDefaults:[NSUserDefaults standardUserDefaults]];
 }
 
 // MARK:- Query chrome (editor footer, results footer, empty state)
@@ -1008,6 +1158,7 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
         info.instanceHost = self.sforce.serverUrl.host;
         self.orgInfo = info;
         [self updateOrgChip];
+        self->descDataSource.orgId = info.orgId;
     }];
     self.rootResults.instanceHost = self.sforce.serverUrl.host;
     self.childResults.instanceHost = self.sforce.serverUrl.host;

@@ -25,6 +25,7 @@
 #import "CaseInsensitiveStringKey.h"
 #import "SoqlToken.h"
 #import "Completion.h"
+#import "SObjectKinds.h"
 
 @implementation ZKDescribeSObject (Relationships)
 
@@ -216,4 +217,126 @@
     }
     return [lines componentsJoinedByString:@"\n"];
 }
+@end
+
+// MARK: - Hover
+
+static void addLine(NSMutableArray<NSString*> *lines, NSString *prefix, NSArray<NSString*> *items, NSString *sep) {
+    if (items.count > 0) {
+        [lines addObject:[NSString stringWithFormat:@"%@%@", prefix, [items componentsJoinedByString:sep]]];
+    }
+}
+
+static NSString *joinFacts(NSArray<NSString*> *facts, NSArray<NSString*> *meta) {
+    NSMutableArray<NSString*> *all = [NSMutableArray arrayWithArray:facts];
+    [all addObject:@""];
+    [all addObject:@"Metadata:"];
+    [all addObjectsFromArray:meta];
+    return [all componentsJoinedByString:@"\n"];
+}
+
+@implementation ZKDescribeGlobalSObject (Hover)
+
+-(NSString *)hoverTextWithDescribe:(ZKDescribeSObject *)describe {
+    NSMutableArray<NSString*> *facts = [NSMutableArray arrayWithCapacity:5];
+    [facts addObject:self.label.length > 0 ? self.label : self.name];
+    [facts addObject:[NSString stringWithFormat:@"API name: %@", self.name]];
+    NSMutableArray<NSString*> *kind = [NSMutableArray arrayWithCapacity:2];
+    [kind addObject:[SObjectKinds kindDescriptionForName:self.name custom:self.custom customSetting:self.customSetting]];
+    if (self.keyPrefix.length > 0) {
+        [kind addObject:[NSString stringWithFormat:@"key prefix %@", self.keyPrefix]];
+    }
+    addLine(facts, @"Kind: ", kind, @" \u00b7 ");
+    if (describe != nil) {
+        [facts addObject:[NSString stringWithFormat:@"Fields: %lu \u00b7 child relationships: %lu",
+                          (unsigned long)describe.fields.count, (unsigned long)describe.childRelationships.count]];
+    }
+
+    NSMutableArray<NSString*> *meta = [NSMutableArray arrayWithCapacity:3];
+    NSMutableArray<NSString*> *query = [NSMutableArray arrayWithCapacity:2];
+    [query addObject:self.queryable ? @"queryable" : @"not queryable"];
+    if (self.searchable) [query addObject:@"searchable"];
+    addLine(meta, @"Query: ", query, @", ");
+
+    NSMutableArray<NSString*> *edit = [NSMutableArray arrayWithCapacity:4];
+    if (self.createable)  [edit addObject:@"create"];
+    if (self.updateable)  [edit addObject:@"update"];
+    if (self.deletable)   [edit addObject:@"delete"];
+    if (self.undeletable) [edit addObject:@"undelete"];
+    if (edit.count == 0)  [edit addObject:@"read only"];
+    addLine(meta, @"Edit: ", edit, @", ");
+
+    NSMutableArray<NSString*> *flags = [NSMutableArray arrayWithCapacity:4];
+    if (self.customSetting) [flags addObject:@"custom setting"];
+    if (self.feedEnabled)   [flags addObject:@"feed tracking"];
+    if (self.triggerable)   [flags addObject:@"triggers"];
+    if (self.mergeable)     [flags addObject:@"mergeable"];
+    addLine(meta, @"Flags: ", flags, @", ");
+    return joinFacts(facts, meta);
+}
+
+@end
+
+@implementation ZKDescribeField (Hover)
+
+-(NSString *)hoverText {
+    NSMutableArray<NSString*> *facts = [NSMutableArray arrayWithCapacity:6];
+    [facts addObject:self.label.length > 0 ? self.label : self.name];
+    [facts addObject:[NSString stringWithFormat:@"API name: %@", self.name]];
+    [facts addObject:[NSString stringWithFormat:@"Type: %@", [self typeDescription]]];
+    if (self.inlineHelpText.length > 0) {
+        [facts addObject:[NSString stringWithFormat:@"Help text: %@", self.inlineHelpText]];
+    }
+    NSMutableArray<NSString*> *vals = [NSMutableArray arrayWithCapacity:8];
+    NSUInteger active = 0;
+    for (ZKPicklistEntry *ple in self.picklistValues) {
+        if (!ple.active) continue;
+        active++;
+        if (vals.count < 8 && ple.value != nil) {
+            [vals addObject:ple.value];
+        }
+    }
+    if (vals.count > 0) {
+        NSString *more = active > vals.count ? [NSString stringWithFormat:@", +%lu more", (unsigned long)(active - vals.count)] : @"";
+        [facts addObject:[NSString stringWithFormat:@"Values: %@%@", [vals componentsJoinedByString:@", "], more]];
+    }
+    if (self.calculatedFormula.length > 0) {
+        [facts addObject:[NSString stringWithFormat:@"Formula: %@", self.calculatedFormula]];
+    }
+
+    NSMutableArray<NSString*> *meta = [NSMutableArray arrayWithCapacity:3];
+    NSMutableArray<NSString*> *yes = [NSMutableArray arrayWithCapacity:4];
+    NSMutableArray<NSString*> *no = [NSMutableArray arrayWithCapacity:4];
+    [(self.filterable ? yes : no) addObject:@"filterable"];
+    [(self.sortable ? yes : no) addObject:@"sortable"];
+    [(self.groupable ? yes : no) addObject:@"groupable"];
+    [(self.aggregatable ? yes : no) addObject:@"aggregatable"];
+    NSMutableArray<NSString*> *qparts = [NSMutableArray arrayWithCapacity:2];
+    if (yes.count > 0) [qparts addObject:[yes componentsJoinedByString:@", "]];
+    if (no.count > 0)  [qparts addObject:[NSString stringWithFormat:@"not %@", [no componentsJoinedByString:@", not "]]];
+    addLine(meta, @"Query: ", qparts, @" \u00b7 ");
+
+    NSString *edit;
+    if (self.createable && self.updateable)      edit = @"create and update";
+    else if (self.createable)                    edit = @"create only";
+    else if (self.updateable)                    edit = @"update only";
+    else                                         edit = @"read only";
+    if (!self.nillable && self.createable && !self.defaultedOnCreate) {
+        edit = [edit stringByAppendingString:@", required"];
+    }
+    [meta addObject:[NSString stringWithFormat:@"Edit: %@", edit]];
+
+    NSMutableArray<NSString*> *flags = [NSMutableArray arrayWithCapacity:8];
+    if (self.custom)      [flags addObject:@"custom"];
+    if (self.calculated)  [flags addObject:@"formula"];
+    if (self.autoNumber)  [flags addObject:@"auto number"];
+    if (self.externalId)  [flags addObject:@"external id"];
+    if (self.unique)      [flags addObject:@"unique"];
+    if (self.idLookup)    [flags addObject:@"id lookup"];
+    if (self.nameField)   [flags addObject:@"name field"];
+    if (self.encrypted)   [flags addObject:@"encrypted"];
+    addLine(meta, @"Flags: ", flags, @", ");
+    return joinFacts(facts, meta);
+}
+
 @end

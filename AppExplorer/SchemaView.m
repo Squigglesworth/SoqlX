@@ -323,11 +323,11 @@ static const float minSpacerSize = 5.0f;
     if (box == nil) return nil;
     for (ZKDescribeField *f in [box fieldsToDisplay]) {
         if (NSPointInRect(point, [box rectOfFieldPaddedToEdges:f.name])) {
-            return [f documentation];
+            return [f hoverText];
         }
     }
     if (NSPointInRect(point, [box titleRect])) {
-        return [box.sobject documentation];
+        return [box.sobject hoverTextWithDescribe:box.sobject];
     }
     return nil;
 }

@@ -26,12 +26,23 @@
 #import "Prefs.h"
 #import "ZKXsdAnyType.h"
 #import "Describer.h"
+#import "DescribeExtras.h"
+#import "SidebarFilter.h"
+#import "SidebarItems.h"
+#import "RecentObjects.h"
 
 @interface DescribeListDataSource ()
 -(void)updateFilter;
 -(void)prefsChanged:(NSNotification *)notif;
 @property Describer *describer;
 @property (strong,nonatomic) DescriberDelegates *delegates;
+@property (strong) SidebarFilter *categoryFilter;
+@property (strong) SidebarGroup *recentGroup;
+@property (strong) SidebarGroup *allGroup;
+@property (copy) NSArray<NSString*> *recentNames;
+@property (copy) NSArray<SidebarRecentItem*> *recentItems;
+@property (strong) NSMutableDictionary<NSString*,SidebarRecentItem*> *recentItemCache;
+@property (strong) HighlightTextFieldCell *groupCell;
 @end
 
 
@@ -43,8 +54,9 @@
 @implementation ZKDescribeField (Filtering)
 
 -(BOOL)fieldMatchesFilter:(NSString *)filter {
-    if (filter == nil) return NO;
-    return [self.name rangeOfString:filter options:NSCaseInsensitiveSearch].location != NSNotFound;
+    if (filter.length == 0) return NO;
+    return [self.name rangeOfString:filter options:NSCaseInsensitiveSearch].location != NSNotFound ||
+           [self.label rangeOfString:filter options:NSCaseInsensitiveSearch].location != NSNotFound;
 }
 
 -(NSString *)defaultValueAsString {
@@ -62,6 +74,14 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(prefsChanged:) name:NSUserDefaultsDidChangeNotification object:nil];
     self.describer = [[Describer alloc] init];
     self.delegates = [DescriberDelegates new];
+    self.categoryFilter = [SidebarFilter filterFromDefaults:[NSUserDefaults standardUserDefaults]];
+    self.recentGroup = [SidebarGroup groupWithIdentifier:@"recent" title:@"Recent"];
+    self.allGroup = [SidebarGroup groupWithIdentifier:@"all" title:@"All objects"];
+    self.recentNames = @[];
+    self.recentItems = @[];
+    self.recentItemCache = [NSMutableDictionary dictionary];
+    self.groupCell = [[HighlightTextFieldCell alloc] initTextCell:@""];
+    self.groupCell.rowStyle = SidebarRowGroup;
     return self;
 }
 
@@ -74,7 +94,34 @@
 }
 
 -(void)prefsChanged:(NSNotification *)notif {
+    // Any window's filter menu, or a query in another window of this org, lands here.
+    SidebarFilter *f = [SidebarFilter filterFromDefaults:[NSUserDefaults standardUserDefaults]];
+    NSArray<NSString*> *recents = self.orgId.length > 0 ? [RecentObjects namesForOrgId:self.orgId] : @[];
+    if (![f isEqual:self.categoryFilter] || ![recents isEqualToArray:self.recentNames]) {
+        self.categoryFilter = f;
+        self.recentNames = recents;
+        [self updateFilter];
+    }
+    [self reloadOutline];
+}
+
+-(void)reloadOutline {
     [outlineView reloadData];
+    [outlineView expandItem:self.recentGroup];
+    [outlineView expandItem:self.allGroup];
+}
+
+-(void)setOrgId:(NSString *)orgId {
+    _orgId = [orgId copy];
+    self.recentNames = _orgId.length > 0 ? [RecentObjects namesForOrgId:_orgId] : @[];
+    [self updateFilter];
+    [self reloadOutline];
+}
+
+-(id)modelItemForItem:(id)item {
+    if ([item isKindOfClass:[SidebarRecentItem class]]) return [(SidebarRecentItem *)item sobject];
+    if ([item isKindOfClass:[SidebarGroup class]]) return nil;
+    return item;
 }
 
 - (void)setTypes:(ZKDescribeGlobalTheme *)t view:(NSOutlineView *)ov {
@@ -100,6 +147,7 @@
         byname[o.name.lowercaseString] = o;
         
     descGlobalSobjects = byname;
+    [self.recentItemCache removeAllObjects];
     
     NSString *sid = sforce.sessionId;
     for (ZKDescribeThemeItem *r in t.theme.themeItems) {
@@ -108,6 +156,8 @@
             NSString *tn = r.name.lowercaseString;
             self->icons[tn] = img;
             [self->outlineView reloadItem:byname[tn]];
+            SidebarRecentItem *recent = self.recentItemCache[tn];
+            if (recent != nil) [self->outlineView reloadItem:recent];
         }];
     }
     [self.describer describe:t withClient:sforce andDelegate:self];
@@ -130,36 +180,66 @@
     return types.count;
 }
 
--(void)setFilteredTypes:(NSArray<ZKDescribeGlobalSObject*> *)t {
-    NSArray *old = filteredTypes;
+-(void)setFilteredTypes:(NSArray<ZKDescribeGlobalSObject*> *)t recents:(NSArray<SidebarRecentItem*> *)r {
+    BOOL changed = ![filteredTypes isEqualToArray:t] || ![self.recentItems isEqualToArray:r];
     filteredTypes = t;
-    if (![old isEqualToArray:t])
-        [outlineView reloadData];
+    self.recentItems = r;
+    if (changed)
+        [self reloadOutline];
 }
 
--(BOOL)filterIncludesType:(NSString *)type {
-    if ([type rangeOfString:filter options:NSCaseInsensitiveSearch].location != NSNotFound)
-        return YES; // easy, type contains the filter clause
-    if (![self hasDescribe:type]) 
+-(BOOL)textFilterIncludesType:(ZKDescribeGlobalSObject *)type {
+    if (filter.length == 0)
+        return YES;
+    if ([type.name rangeOfString:filter options:NSCaseInsensitiveSearch].location != NSNotFound ||
+        [type.label rangeOfString:filter options:NSCaseInsensitiveSearch].location != NSNotFound)
+        return YES; // easy, the name or label contains the filter clause
+    if (![self hasDescribe:type.name])
         return NO;    // we haven't described it yet
-    for (ZKDescribeField *f in [self cachedDescribe:type].fields) {
+    for (ZKDescribeField *f in [self cachedDescribe:type.name].fields) {
         if ([f fieldMatchesFilter:filter])
             return YES;
     }
     return NO;
 }
 
--(void)updateFilter {
-    if (filter.length == 0) {
-        [self setFilteredTypes:types];
-        return;
+-(BOOL)categoryFilterIncludesType:(ZKDescribeGlobalSObject *)type {
+    return [self.categoryFilter includesName:type.name
+                                      custom:type.custom
+                               customSetting:type.customSetting
+                                   queryable:type.queryable
+                         deprecatedAndHidden:type.deprecatedAndHidden];
+}
+
+-(SidebarRecentItem *)recentItemForType:(ZKDescribeGlobalSObject *)type {
+    NSString *k = type.name.lowercaseString;
+    SidebarRecentItem *item = self.recentItemCache[k];
+    if (item == nil) {
+        item = [SidebarRecentItem itemWithSObject:type];
+        self.recentItemCache[k] = item;
     }
-    NSMutableArray *ft = [NSMutableArray array];
+    return item;
+}
+
+-(void)updateFilter {
+    NSMutableArray *ft = [NSMutableArray arrayWithCapacity:types.count];
     for (ZKDescribeGlobalSObject *type in types) {
-        if ([self filterIncludesType:type.name])
+        if ([self categoryFilterIncludesType:type] && [self textFilterIncludesType:type])
             [ft addObject:type];
     }
-    [self setFilteredTypes:ft];
+    // Recent entries skip the category filter (you used them), but honour the text filter.
+    NSMutableArray *recents = [NSMutableArray arrayWithCapacity:self.recentNames.count];
+    for (NSString *name in self.recentNames) {
+        ZKDescribeGlobalSObject *type = descGlobalSobjects[name.lowercaseString];
+        if (type != nil && [self textFilterIncludesType:type])
+            [recents addObject:[self recentItemForType:type]];
+    }
+    NSNumberFormatter *nf = [NSNumberFormatter new];
+    nf.numberStyle = NSNumberFormatterDecimalStyle;
+    NSString *total = [nf stringFromNumber:@(types.count)];
+    self.allGroup.detail = ft.count == types.count ? total
+        : [NSString stringWithFormat:@"%@ of %@", [nf stringFromNumber:@(ft.count)], total];
+    [self setFilteredTypes:ft recents:recents];
 }
 
 - (NSString *)filter {
@@ -273,63 +353,121 @@
 }
 
 // for use in an outline view
+-(NSArray *)rootItems {
+    return self.recentItems.count > 0 ? @[self.recentGroup, self.allGroup] : @[self.allGroup];
+}
+
+-(NSArray<ZKDescribeField*> *)fieldsOf:(ZKDescribeGlobalSObject *)item {
+    BOOL isSorted = [[NSUserDefaults standardUserDefaults] boolForKey:PREF_SORTED_FIELD_LIST];
+    if (isSorted) {
+        NSArray *sorted = sortedDescribes[item.name.lowercaseString];
+        if (sorted != nil) return sorted;
+    }
+    return [self cachedDescribe:item.name].fields;
+}
+
 - (NSInteger)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(id)item {
-    if (item == nil) return filteredTypes.count;
-    return [self cachedDescribe:[item name]].fields.count;
+    if (item == nil) return [self rootItems].count;
+    if (item == self.recentGroup) return self.recentItems.count;
+    if (item == self.allGroup) return filteredTypes.count;
+    if ([item isKindOfClass:[ZKDescribeGlobalSObject class]]) return [self fieldsOf:item].count;
+    return 0;
 }
 
 - (BOOL)outlineView:(NSOutlineView *)outlineView isItemExpandable:(id)item  {
-    return item == nil || [item isKindOfClass:[ZKDescribeGlobalSObject class]];
+    return item == nil || [item isKindOfClass:[SidebarGroup class]] || [item isKindOfClass:[ZKDescribeGlobalSObject class]];
 }
 
 - (id)outlineView:(NSOutlineView *)outlineView child:(NSInteger)index ofItem:(id)item {
-    if (item == nil) return filteredTypes[index];
-    NSArray *fields = [self cachedDescribe:[item name]].fields;
-    BOOL isSorted = [[NSUserDefaults standardUserDefaults] boolForKey:PREF_SORTED_FIELD_LIST];
-    if (isSorted)
-        fields = sortedDescribes[[item name].lowercaseString];
-    return fields[index];
+    if (item == nil) return [self rootItems][index];
+    if (item == self.recentGroup) return self.recentItems[index];
+    if (item == self.allGroup) return filteredTypes[index];
+    return [self fieldsOf:item][index];
 }
 
 - (id)outlineView:(NSOutlineView *)outlineView objectValueForTableColumn:(NSTableColumn *)tableColumn byItem:(id)item {
-    if ([tableColumn.headerCell.stringValue isEqualToString:@"SObjects"]) {
-        return [item name];
-    }
-    return nil;
+    if ([item isKindOfClass:[SidebarGroup class]]) return [(SidebarGroup *)item title];
+    id model = [self modelItemForItem:item];
+    return [model respondsToSelector:@selector(name)] ? [model name] : nil;
 }
 
--(NSCell *)outlineView:(NSOutlineView *)outlineView dataCellForTableColumn:(NSTableColumn *)tableColumn item:(id)item {
-    HighlightTextFieldCell *c = tableColumn.dataCell;
-    c.zkImage = nil;
-    c.zkStandout = NO;
-    c.zkTextXOffset = 8;
-    c.textColor = [NSColor textColor];
-    c.font = [NSFont systemFontOfSize:12.0f];
-    
-    if ([item isKindOfClass:[ZKDescribeGlobalSObject class]]) {
-        c.zkTextXOffset = 18;
-        c.zkImage = [self iconForType:[item name]];
-        if (![self hasDescribe:[item name]]) {
-            c.textColor = [c.textColor colorWithAlphaComponent:0.75];
-        }
+-(BOOL)outlineView:(NSOutlineView *)outlineView isGroupItem:(id)item {
+    return [item isKindOfClass:[SidebarGroup class]];
+}
 
-    } else if ([item isKindOfClass:[ZKDescribeField class]]) {
-        if ([item fieldMatchesFilter:filter]) {
-            c.font = [NSFont boldSystemFontOfSize:13.0f];
-            c.textColor = [[NSColor blueColor] blendedColorWithFraction:0.5 ofColor:[NSColor blackColor]];
-            [c setZkStandout:YES];
-        }
+-(BOOL)outlineView:(NSOutlineView *)outlineView shouldSelectItem:(id)item {
+    return ![item isKindOfClass:[SidebarGroup class]];
+}
+
+// The type column of a field row: "→ Account", "email(80)", "currency(18,2)", "boolean".
+-(NSString *)sidebarTypeOf:(ZKDescribeField *)f {
+    if ([f.type isEqualToString:@"reference"] && f.referenceTo.count > 0) {
+        if (f.referenceTo.count == 1) return [NSString stringWithFormat:@"→ %@", f.referenceTo[0]];
+        return [NSString stringWithFormat:@"→ %@ +%lu", f.referenceTo[0], (unsigned long)(f.referenceTo.count - 1)];
+    }
+    NSSet *withLength = [NSSet setWithArray:@[@"string", @"textarea", @"email", @"phone", @"url", @"encryptedstring"]];
+    if ([withLength containsObject:f.type] && f.length > 0)
+        return [NSString stringWithFormat:@"%@(%ld)", f.type, (long)f.length];
+    NSSet *withScale = [NSSet setWithArray:@[@"double", @"currency", @"percent"]];
+    if ([withScale containsObject:f.type])
+        return [NSString stringWithFormat:@"%@(%ld,%ld)", f.type, (long)f.precision, (long)f.scale];
+    return f.type;
+}
+
+-(NSCell *)outlineView:(NSOutlineView *)ov dataCellForTableColumn:(NSTableColumn *)tableColumn item:(id)item {
+    if (tableColumn == nil) {
+        // A full-width cell is asked for once per row; only group rows use one.
+        if (![item isKindOfClass:[SidebarGroup class]]) return nil;
+        HighlightTextFieldCell *g = self.groupCell;
+        g.stringValue = [(SidebarGroup *)item title];
+        g.detailText = [(SidebarGroup *)item detail];
+        return g;
+    }
+    HighlightTextFieldCell *c = tableColumn.dataCell;
+    c.icon = nil;
+    c.detailText = nil;
+    c.standout = NO;
+    c.dimmed = NO;
+    NSInteger row = [ov rowForItem:item];
+    c.selectedRow = row >= 0 && [ov isRowSelected:row];
+
+    if ([item isKindOfClass:[SidebarGroup class]]) {
+        c.rowStyle = SidebarRowGroup;
+        c.detailText = [(SidebarGroup *)item detail];
+        return c;
+    }
+    id model = [self modelItemForItem:item];
+    if ([model isKindOfClass:[ZKDescribeGlobalSObject class]]) {
+        NSString *name = [model name];
+        c.rowStyle = SidebarRowObject;
+        c.icon = [self iconForType:name];
+        c.dimmed = ![self hasDescribe:name];
+
+    } else if ([model isKindOfClass:[ZKDescribeField class]]) {
+        c.rowStyle = SidebarRowField;
+        c.detailText = [self sidebarTypeOf:model];
+        c.standout = [model fieldMatchesFilter:filter];
     }
     return c;
 }
 
 -(CGFloat)outlineView:(NSOutlineView *)ov heightOfRowByItem:(id)item {
-    if ([item isKindOfClass:[ZKDescribeField class]]) {
-        if ([item fieldMatchesFilter:filter]) {
-            return ov.rowHeight + 4;
-        }
+    if ([item isKindOfClass:[SidebarGroup class]]) {
+        return ov.rowHeight + 4;
     }
     return ov.rowHeight;
+}
+
+-(NSString *)outlineView:(NSOutlineView *)ov toolTipForCell:(NSCell *)cell rect:(NSRectPointer)rect
+             tableColumn:(NSTableColumn *)tableColumn item:(id)item mouseLocation:(NSPoint)mouseLocation {
+    id model = [self modelItemForItem:item];
+    if ([model isKindOfClass:[ZKDescribeGlobalSObject class]]) {
+        return [model hoverTextWithDescribe:[self cachedDescribe:[model name]]];
+    }
+    if ([model isKindOfClass:[ZKDescribeField class]]) {
+        return [model hoverText];
+    }
+    return nil;
 }
 
 @end

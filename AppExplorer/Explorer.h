@@ -99,6 +99,7 @@
 @property (strong) ShellView *shell;
 // What the org told us at login (nil until the Organization query completes).
 @property (strong) OrgInfo *orgInfo;
+@property (strong) NSButton *sidebarFilterButton;   // filter menu button above the object tree
 
 // Run honours this ("Include deleted and archived"), going through queryAll when set.
 @property (assign) BOOL includeDeleted;

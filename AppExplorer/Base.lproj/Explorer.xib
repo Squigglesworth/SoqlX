@@ -87,7 +87,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="163" height="695"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
-                                                <outlineView focusRingType="none" verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" selectionHighlightStyle="sourceList" multipleSelection="NO" autosaveColumns="NO" headerView="1390" indentationPerLevel="19" autoresizesOutlineColumn="YES" outlineTableColumn="1391" id="1387">
+                                                <outlineView focusRingType="none" verticalHuggingPriority="750" columnAutoresizingStyle="firstColumnOnly" selectionHighlightStyle="sourceList" multipleSelection="NO" autosaveColumns="NO" headerView="1390" indentationPerLevel="19" autoresizesOutlineColumn="YES" outlineTableColumn="1391" id="1387" customClass="SidebarOutlineView">
                                                     <rect key="frame" x="0.0" y="0.0" width="163" height="678"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <size key="intercellSpacing" width="3" height="2"/>

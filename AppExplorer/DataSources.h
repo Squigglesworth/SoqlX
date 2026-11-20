@@ -25,6 +25,7 @@
 #import "Describer.h"
 
 @class ZKSforceClient;
+@class SidebarFilter;
 @class ZKDescribeSObject;
 @class ZKDescribeField;
 @class ZKDescribeGlobalTheme;
@@ -73,6 +74,13 @@
 
 // filter the view
 @property (copy) NSString *filter;
+
+// The org whose recent objects head the tree; nil hides the Recent group.
+@property (copy, nonatomic) NSString *orgId;
+// The category filter in force (read from user defaults; every window follows it).
+@property (readonly) SidebarFilter *categoryFilter;
+// The model object behind an outline row: a Recent entry gives its sobject, a group row gives nil.
+-(id)modelItemForItem:(id)item;
 
 @property (readonly, copy) NSArray<ZKDescribeGlobalSObject*> *SObjects;
 

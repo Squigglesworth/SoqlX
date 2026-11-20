@@ -253,4 +253,60 @@
     XCTAssertEqualObjects(@"Edit My Snippets…", menu.itemArray.lastObject.title);
 }
 
+// MARK: - hover text
+
+-(ZKDescribeGlobalSObject*)globalSObjectFromXml:(NSString*)xml {
+    NSString *doc = [NSString stringWithFormat:@"<root>%@</root>", xml];
+    ZKElement *root = [ZKParser parseData:[doc dataUsingEncoding:NSUTF8StringEncoding]];
+    ZKXmlDeserializer *deser = [[ZKXmlDeserializer alloc] initWithXmlElement:root];
+    return [deser complexTypeArrayFromElements:@"sobject" cls:[ZKDescribeGlobalSObject class]].firstObject;
+}
+
+-(void)testObjectHoverText {
+    ZKDescribeGlobalSObject *g = [self globalSObjectFromXml:
+        @"<sobject><name>Account</name><label>Account</label><keyPrefix>001</keyPrefix>"
+         "<queryable>true</queryable><searchable>true</searchable><createable>true</createable>"
+         "<updateable>true</updateable><deletable>true</deletable><triggerable>true</triggerable></sobject>"];
+    XCTAssertNotNil(g);
+    NSString *h = [g hoverTextWithDescribe:nil];
+    XCTAssertTrue([h hasPrefix:@"Account\nAPI name: Account\n"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Kind: Standard object \u00b7 key prefix 001"], @"%@", h);
+    XCTAssertTrue([h containsString:@"\n\nMetadata:\n"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Query: queryable, searchable"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Edit: create, update, delete"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Flags: triggers"], @"%@", h);
+    XCTAssertFalse([h containsString:@"Fields:"], @"no describe, no counts");
+    NSRange facts = [h rangeOfString:@"API name: Account"];
+    NSRange meta = [h rangeOfString:@"Metadata:"];
+    XCTAssertTrue(facts.location < meta.location);
+
+    NSString *withDescribe = [g hoverTextWithDescribe:[self describe:@"Account"]];
+    XCTAssertTrue([withDescribe containsString:@"Fields: 5 \u00b7 child relationships: 1"], @"%@", withDescribe);
+}
+
+-(void)testObjectHoverTextReadOnly {
+    ZKDescribeGlobalSObject *g = [self globalSObjectFromXml:@"<sobject><name>Foo__e</name><custom>true</custom></sobject>"];
+    NSString *h = [g hoverTextWithDescribe:nil];
+    XCTAssertTrue([h containsString:@"Kind: Platform event"], @"%@", h);
+    XCTAssertFalse([h containsString:@"key prefix"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Query: not queryable"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Edit: read only"], @"%@", h);
+    XCTAssertFalse([h containsString:@"Flags:"], @"%@", h);
+}
+
+-(void)testFieldHoverText {
+    ZKDescribeSObject *contact = [self describe:@"Contact"];
+    ZKDescribeField *f = [self field:@"AccountId" on:contact];
+    XCTAssertNotNil(f);
+    NSString *h = [f hoverText];
+    XCTAssertTrue([h hasPrefix:@"AccountId\nAPI name: AccountId\n"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Type: reference to Account"], @"%@", h);
+    XCTAssertTrue([h containsString:@"\n\nMetadata:\n"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Query: not filterable, not sortable, not groupable, not aggregatable"], @"%@", h);
+    XCTAssertTrue([h containsString:@"Edit: read only"], @"%@", h);
+    NSRange facts = [h rangeOfString:@"Type: reference"];
+    NSRange meta = [h rangeOfString:@"Metadata:"];
+    XCTAssertTrue(facts.location < meta.location);
+}
+
 @end

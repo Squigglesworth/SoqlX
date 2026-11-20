@@ -24,6 +24,17 @@
 		A1B2C3D4E5F6000000000D73 /* OrgSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D72 /* OrgSettings.m */; };
 		A1B2C3D4E5F6000000000D74 /* OrgSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D72 /* OrgSettings.m */; };
 		A1B2C3D4E5F6000000000D76 /* OrgSettingsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */; };
+		A1B2C3D4E5F6000000000E03 /* SObjectKinds.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E02 /* SObjectKinds.m */; };
+		A1B2C3D4E5F6000000000E06 /* SidebarFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E05 /* SidebarFilter.m */; };
+		A1B2C3D4E5F6000000000E09 /* RecentObjects.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E08 /* RecentObjects.m */; };
+		A1B2C3D4E5F6000000000E0C /* SidebarItems.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E0B /* SidebarItems.m */; };
+		A1B2C3D4E5F6000000000E0F /* SidebarOutlineView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E0E /* SidebarOutlineView.m */; };
+		A1B2C3D4E5F6000000000E10 /* SObjectKinds.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E02 /* SObjectKinds.m */; };
+		A1B2C3D4E5F6000000000E11 /* SidebarFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E05 /* SidebarFilter.m */; };
+		A1B2C3D4E5F6000000000E12 /* RecentObjects.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E08 /* RecentObjects.m */; };
+		A1B2C3D4E5F6000000000E14 /* SObjectKindsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E13 /* SObjectKindsTests.m */; };
+		A1B2C3D4E5F6000000000E16 /* SidebarFilterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E15 /* SidebarFilterTests.m */; };
+		A1B2C3D4E5F6000000000E18 /* RecentObjectsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E17 /* RecentObjectsTests.m */; };
 		A1B2C3D4E5F6000000000D42 /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D41 /* Fonts */; };
 		A1B2C3D4E5F6000000000D53 /* DesignTokens.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D52 /* DesignTokens.m */; };
 		A1B2C3D4E5F6000000000D54 /* DesignTokens.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D52 /* DesignTokens.m */; };
@@ -302,6 +313,19 @@
 		A1B2C3D4E5F6000000000D71 /* OrgSettings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OrgSettings.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D72 /* OrgSettings.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OrgSettings.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OrgSettingsTests.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E01 /* SObjectKinds.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SObjectKinds.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E02 /* SObjectKinds.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SObjectKinds.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E04 /* SidebarFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SidebarFilter.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E05 /* SidebarFilter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SidebarFilter.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E07 /* RecentObjects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecentObjects.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E08 /* RecentObjects.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RecentObjects.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E0A /* SidebarItems.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SidebarItems.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E0B /* SidebarItems.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SidebarItems.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E0D /* SidebarOutlineView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SidebarOutlineView.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E0E /* SidebarOutlineView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SidebarOutlineView.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E13 /* SObjectKindsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SObjectKindsTests.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E15 /* SidebarFilterTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SidebarFilterTests.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E17 /* RecentObjectsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RecentObjectsTests.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D41 /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D51 /* DesignTokens.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DesignTokens.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D52 /* DesignTokens.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DesignTokens.m; sourceTree = "<group>"; };
@@ -602,6 +626,16 @@
 				A1B2C3D4E5F6000000000D52 /* DesignTokens.m */,
 				A1B2C3D4E5F6000000000D71 /* OrgSettings.h */,
 				A1B2C3D4E5F6000000000D72 /* OrgSettings.m */,
+				A1B2C3D4E5F6000000000E01 /* SObjectKinds.h */,
+				A1B2C3D4E5F6000000000E02 /* SObjectKinds.m */,
+				A1B2C3D4E5F6000000000E04 /* SidebarFilter.h */,
+				A1B2C3D4E5F6000000000E05 /* SidebarFilter.m */,
+				A1B2C3D4E5F6000000000E07 /* RecentObjects.h */,
+				A1B2C3D4E5F6000000000E08 /* RecentObjects.m */,
+				A1B2C3D4E5F6000000000E0A /* SidebarItems.h */,
+				A1B2C3D4E5F6000000000E0B /* SidebarItems.m */,
+				A1B2C3D4E5F6000000000E0D /* SidebarOutlineView.h */,
+				A1B2C3D4E5F6000000000E0E /* SidebarOutlineView.m */,
 				A1B2C3D4E5F600000000008C /* SalesforceIds.h */,
 				A1B2C3D4E5F600000000008D /* SalesforceIds.m */,
 				A1B2C3D4E5F6000000000090 /* ResultTextCell.h */,
@@ -887,6 +921,9 @@
 				F4C889D12624F272006D606A /* SoqlTokenizerTests.m */,
 				A1B2C3D4E5F6000000000D31 /* HelpDocsTests.m */,
 				A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */,
+				A1B2C3D4E5F6000000000E13 /* SObjectKindsTests.m */,
+				A1B2C3D4E5F6000000000E15 /* SidebarFilterTests.m */,
+				A1B2C3D4E5F6000000000E17 /* RecentObjectsTests.m */,
 				A1B2C3D4E5F6000000000094 /* ConfirmDeleteDialogTests.m */,
 				A1B2C3D4E5F6000000000096 /* SalesforceIdsTests.m */,
 				F4394F9B264981C000ABFA2B /* describes.xml */,
@@ -1281,6 +1318,11 @@
 				A1B2C3D4E5F6000000000D03 /* SoqlDocs.m in Sources */,
 				A1B2C3D4E5F6000000000D53 /* DesignTokens.m in Sources */,
 				A1B2C3D4E5F6000000000D73 /* OrgSettings.m in Sources */,
+				A1B2C3D4E5F6000000000E03 /* SObjectKinds.m in Sources */,
+				A1B2C3D4E5F6000000000E06 /* SidebarFilter.m in Sources */,
+				A1B2C3D4E5F6000000000E09 /* RecentObjects.m in Sources */,
+				A1B2C3D4E5F6000000000E0C /* SidebarItems.m in Sources */,
+				A1B2C3D4E5F6000000000E0F /* SidebarOutlineView.m in Sources */,
 				A1B2C3D4E5F6000000000D63 /* NavRailView.m in Sources */,
 				A1B2C3D4E5F6000000000D66 /* OrgChipView.m in Sources */,
 				A1B2C3D4E5F6000000000D69 /* ShellView.m in Sources */,
@@ -1313,6 +1355,12 @@
 				A1B2C3D4E5F6000000000D54 /* DesignTokens.m in Sources */,
 				A1B2C3D4E5F6000000000D74 /* OrgSettings.m in Sources */,
 				A1B2C3D4E5F6000000000D76 /* OrgSettingsTests.m in Sources */,
+				A1B2C3D4E5F6000000000E10 /* SObjectKinds.m in Sources */,
+				A1B2C3D4E5F6000000000E11 /* SidebarFilter.m in Sources */,
+				A1B2C3D4E5F6000000000E12 /* RecentObjects.m in Sources */,
+				A1B2C3D4E5F6000000000E14 /* SObjectKindsTests.m in Sources */,
+				A1B2C3D4E5F6000000000E16 /* SidebarFilterTests.m in Sources */,
+				A1B2C3D4E5F6000000000E18 /* RecentObjectsTests.m in Sources */,
 				A1B2C3D4E5F600000000008B /* ConfirmDeleteDialog.m in Sources */,
 				A1B2C3D4E5F600000000008F /* SalesforceIds.m in Sources */,
 				A1B2C3D4E5F6000000000093 /* ResultTextCell.m in Sources */,

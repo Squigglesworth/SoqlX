@@ -21,6 +21,7 @@
 
 #import <Foundation/Foundation.h>
 #import <ZKSforce/ZKDescribeSObject.h>
+#import <ZKSforce/ZKDescribeGlobalSObject.h>
 
 @class CaseInsensitiveStringKey;
 @class ZKDescribeField;
@@ -49,3 +50,16 @@
 @interface ZKDescribeField (Documentation)
 -(NSString*)documentation;
 @end
+
+// Longer hover text: the facts first, then the capabilities under "Metadata:".
+// Used by the sidebar and the schema view tooltips.
+NS_ASSUME_NONNULL_BEGIN
+@interface ZKDescribeGlobalSObject (Hover)
+// When a describe is supplied the field and child relationship counts are included.
+-(NSString *)hoverTextWithDescribe:(nullable ZKDescribeSObject *)describe;
+@end
+
+@interface ZKDescribeField (Hover)
+-(NSString *)hoverText;
+@end
+NS_ASSUME_NONNULL_END
