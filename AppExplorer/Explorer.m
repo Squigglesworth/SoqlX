@@ -833,20 +833,20 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     sf.size.height = NSHeight(splitParent.bounds) - NSMinY(sf);
     split.frame = sf;
 
-    // Filter field, refresh and filter buttons pinned to the top of the sidebar pane, tree below.
-    // Twice the size of a standard small control row, so the field and icons are easy to hit.
-    const CGFloat buttonSize = SXControlSM * 2;     // 48
-    const CGFloat searchHeight = 22 * 2;            // 44
-    const CGFloat header = buttonSize + SXSpace2 * 2;
+    // Filter field, then the filter button beside it and refresh on the far right, pinned to the
+    // top of the sidebar pane above the tree.
+    const CGFloat searchHeight = 44;
+    const CGFloat buttonSize = 36;
+    const CGFloat header = searchHeight + SXSpace2 * 2;
     NSRect pb = pane.bounds;
     treeScroll.frame = NSMakeRect(0, 0, NSWidth(pb), NSHeight(pb) - header);
     treeScroll.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     treeScroll.drawsBackground = YES;
     treeScroll.backgroundColor = [SXTokens surface];
 
-    NSImageSymbolConfiguration *big = [NSImageSymbolConfiguration configurationWithPointSize:26 weight:NSFontWeightRegular];
+    NSImageSymbolConfiguration *iconSize = [NSImageSymbolConfiguration configurationWithPointSize:20 weight:NSFontWeightRegular];
     NSButton *(^iconButton)(NSString *, NSString *, SEL, NSString *) = ^NSButton *(NSString *symbol, NSString *label, SEL action, NSString *tip) {
-        NSImage *img = [[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:label] imageWithSymbolConfiguration:big];
+        NSImage *img = [[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:label] imageWithSymbolConfiguration:iconSize];
         NSButton *b = [NSButton buttonWithImage:img target:self action:action];
         b.bordered = NO;
         b.imageScaling = NSImageScaleNone;
@@ -856,24 +856,25 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
         return b;
     };
     CGFloat buttonY = NSHeight(pb) - header + (header - buttonSize) / 2;
-    NSButton *filterButton = iconButton(@"line.3.horizontal.decrease.circle", @"Filter objects", @selector(showSidebarFilterMenu:),
-                                        @"Choose which kinds of objects the list shows");
-    filterButton.frame = NSMakeRect(NSWidth(pb) - SXSpace2 - buttonSize, buttonY, buttonSize, buttonSize);
-    [pane addSubview:filterButton];
-    self.sidebarFilterButton = filterButton;
-
     NSButton *refreshButton = iconButton(@"arrow.clockwise", @"Refresh metadata", @selector(refreshMetadata:),
                                          @"Refresh metadata: describe the org again to pick up new objects and fields");
-    refreshButton.frame = NSMakeRect(NSMinX(filterButton.frame) - buttonSize, buttonY, buttonSize, buttonSize);
+    refreshButton.frame = NSMakeRect(NSWidth(pb) - SXSpace2 - buttonSize, buttonY, buttonSize, buttonSize);
     [pane addSubview:refreshButton];
     self.sidebarRefreshButton = refreshButton;
 
+    NSButton *filterButton = iconButton(@"line.3.horizontal.decrease.circle", @"Filter objects", @selector(showSidebarFilterMenu:),
+                                        @"Choose which kinds of objects the list shows");
+    filterButton.frame = NSMakeRect(NSMinX(refreshButton.frame) - buttonSize, buttonY, buttonSize, buttonSize);
+    [pane addSubview:filterButton];
+    self.sidebarFilterButton = filterButton;
+
     [search removeFromSuperview];
     search.controlSize = NSControlSizeLarge;
-    search.font = [SXTokens sans:18 weight:NSFontWeightRegular];
+    // Smaller text than the bar so it sits with some air above and below.
+    search.font = [SXTokens sans:15 weight:NSFontWeightRegular];
     search.placeholderString = @"Filter objects and fields";
     search.frame = NSMakeRect(SXSpace2, NSHeight(pb) - header + (header - searchHeight) / 2,
-                              NSMinX(refreshButton.frame) - SXSpace1 - SXSpace2, searchHeight);
+                              NSMinX(filterButton.frame) - SXSpace1 - SXSpace2, searchHeight);
     search.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
     [pane addSubview:search];
 

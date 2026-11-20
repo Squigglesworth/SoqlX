@@ -21,8 +21,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-// The query results grid. Every other column is tinted surface-sunken, down the full height of
-// the view, under the row selection, so a wide result reads down its columns.
+// The query results grid. Every other row is tinted surface-sunken, under the row selection and
+// on down past the last row, so a wide result is easy to read across.
 @interface ResultsTableView : NSTableView
-@property (assign, nonatomic) BOOL stripesColumns;   // YES by default
+@property (assign, nonatomic) BOOL stripesRows;   // YES by default
 @end

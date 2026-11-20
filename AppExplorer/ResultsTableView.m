@@ -26,40 +26,42 @@
 
 -(instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
-    if (self) _stripesColumns = YES;
+    if (self) _stripesRows = YES;
     return self;
 }
 
 -(instancetype)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
-    if (self) _stripesColumns = YES;
+    if (self) _stripesRows = YES;
     return self;
 }
 
--(void)setStripesColumns:(BOOL)stripesColumns {
-    _stripesColumns = stripesColumns;
-    [self setNeedsDisplay:YES];
-}
-
-// Columns are added, removed and resized as results arrive; the stripes follow them.
--(void)tile {
-    [super tile];
+-(void)setStripesRows:(BOOL)stripesRows {
+    _stripesRows = stripesRows;
     [self setNeedsDisplay:YES];
 }
 
 -(void)drawBackgroundInClipRect:(NSRect)clipRect {
     [super drawBackgroundInClipRect:clipRect];
-    if (!self.stripesColumns) return;
-    NSIndexSet *cols = [self columnIndexesInRect:clipRect];
-    if (cols.count == 0) return;
+    if (!self.stripesRows) return;
+    CGFloat pitch = self.rowHeight + self.intercellSpacing.height;
+    if (pitch <= 0) return;
     [[SXTokens surfaceSunken] setFill];
-    for (NSUInteger c = cols.firstIndex; c <= cols.lastIndex; c++) {
-        if (c % 2 == 0) continue;
-        NSRect r = [self rectOfColumn:(NSInteger)c];
-        // Down the whole view, past the last row, so short results still read as columns.
-        r.origin.y = NSMinY(clipRect);
-        r.size.height = NSHeight(clipRect);
-        NSRectFill(NSIntersectionRect(r, clipRect));
+    // Real rows first, then the same rhythm continues below the last one.
+    NSRange rows = [self rowsInRect:clipRect];
+    for (NSUInteger r = rows.location; r < NSMaxRange(rows); r++) {
+        if (r % 2 == 1) NSRectFill(NSIntersectionRect([self rectOfRow:(NSInteger)r], clipRect));
+    }
+    NSInteger count = self.numberOfRows;
+    CGFloat y = count > 0 ? NSMaxY([self rectOfRow:count - 1]) : 0;
+    NSInteger r = count;
+    if (y < NSMinY(clipRect)) {
+        NSInteger skip = (NSInteger)floor((NSMinY(clipRect) - y) / pitch);
+        y += skip * pitch;
+        r += skip;
+    }
+    for (; y < NSMaxY(clipRect); y += pitch, r++) {
+        if (r % 2 == 1) NSRectFill(NSIntersectionRect(NSMakeRect(NSMinX(clipRect), y, NSWidth(clipRect), pitch), clipRect));
     }
 }
 
