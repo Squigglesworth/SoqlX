@@ -27,7 +27,8 @@ typedef NS_ENUM(NSInteger, SXButtonVariant) {
     SXButtonVariantDefault = 0,
     SXButtonVariantPrimary,
     SXButtonVariantDanger,
-    SXButtonVariantGhost
+    SXButtonVariantGhost,
+    SXButtonVariantTeal
 };
 
 static const void *kSXVariantKey = &kSXVariantKey;
@@ -56,6 +57,10 @@ static const void *kSXVariantKey = &kSXVariantKey;
         case SXButtonVariantDanger:
             button.attributedTitle = [self centredTitle:title color:button.enabled ? [SXTokens onDanger] : [SXTokens inkSubtle]];
             break;
+        case SXButtonVariantTeal:
+            // surface reads as dark on the light dark-mode teal and light on the deep light-mode teal.
+            button.attributedTitle = [self centredTitle:title color:button.enabled ? [SXTokens surface] : [SXTokens inkSubtle]];
+            break;
         case SXButtonVariantGhost:
         case SXButtonVariantDefault:
         default:
@@ -78,6 +83,10 @@ static const void *kSXVariantKey = &kSXVariantKey;
         case SXButtonVariantDanger:
             b.bezelStyle = NSBezelStyleRounded;
             b.bezelColor = [SXTokens danger];
+            break;
+        case SXButtonVariantTeal:
+            b.bezelStyle = NSBezelStyleRounded;
+            b.bezelColor = [SXTokens link];
             break;
         case SXButtonVariantGhost:
             b.bordered = NO;
@@ -104,6 +113,10 @@ static const void *kSXVariantKey = &kSXVariantKey;
 
 +(NSButton *)dangerButtonWithTitle:(NSString *)title target:(id)target action:(SEL)action {
     return [self buttonWithVariant:SXButtonVariantDanger title:title target:target action:action];
+}
+
++(NSButton *)tealButtonWithTitle:(NSString *)title target:(id)target action:(SEL)action {
+    return [self buttonWithVariant:SXButtonVariantTeal title:title target:target action:action];
 }
 
 +(NSButton *)ghostButtonWithTitle:(NSString *)title target:(id)target action:(SEL)action {

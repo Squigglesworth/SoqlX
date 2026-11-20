@@ -49,7 +49,7 @@
 #import "RecentObjects.h"
 
 static const CGFloat kEditorFooterHeight = 36;
-static const CGFloat kResultsFooterHeight = 32;
+static const CGFloat kResultsFooterHeight = 52;   // was 32; 10pt more above and below the buttons
 static void *kQueryChromeContext = &kQueryChromeContext;
 
 // A footer band: surface-sunken with a hairline along its top edge.
@@ -1001,7 +1001,7 @@ typedef NS_ENUM(NSInteger, SidebarFilterTag) {
         SXBandView *rfooter = [[SXBandView alloc] initWithFrame:NSMakeRect(0, 0, NSWidth(cb), kResultsFooterHeight)];
         rfooter.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
         [container addSubview:rfooter];
-        self.downloadButton = [SXControls defaultButtonWithTitle:@"Download Results" target:self action:@selector(saveQueryResults:)];
+        self.downloadButton = [SXControls tealButtonWithTitle:@"Download Results" target:self action:@selector(saveQueryResults:)];
         self.downloadButton.toolTip = @"Save the results to a CSV file (File, Save Query Results)";
         self.queryMoreButton = [SXControls defaultButtonWithTitle:@"Query more" target:self action:@selector(queryMore:)];
         self.deleteButton = [SXControls dangerButtonWithTitle:@"Delete 0 records" target:self action:@selector(deleteCheckedRows:)];

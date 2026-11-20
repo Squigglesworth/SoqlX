@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 +(NSButton *)primaryButtonWithTitle:(NSString *)title target:(nullable id)target action:(nullable SEL)action;   // accent fill, on-accent bodyStrong title; caller sets keyEquivalent
 +(NSButton *)defaultButtonWithTitle:(NSString *)title target:(nullable id)target action:(nullable SEL)action;   // rounded bezel, body font
 +(NSButton *)dangerButtonWithTitle:(NSString *)title target:(nullable id)target action:(nullable SEL)action;    // danger fill, on-danger title
++(NSButton *)tealButtonWithTitle:(NSString *)title target:(nullable id)target action:(nullable SEL)action;      // link (teal) fill, surface title
 +(NSButton *)ghostButtonWithTitle:(NSString *)title target:(nullable id)target action:(nullable SEL)action;     // borderless, ink-muted
 +(NSButton *)checkboxWithTitle:(NSString *)title target:(nullable id)target action:(nullable SEL)action;
 +(NSTextField *)labelWithString:(NSString *)s font:(NSFont *)f color:(NSColor *)c;
