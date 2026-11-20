@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F6000000000A03 /* RotatingOAuthInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000A02 /* RotatingOAuthInfo.m */; };
 		A1B2C3D4E5F6000000000082 /* SXControls.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000081 /* SXControls.m */; };
 		A1B2C3D4E5F6000000000086 /* EmptyStateView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000085 /* EmptyStateView.m */; };
 		A1B2C3D4E5F600000000008A /* ConfirmDeleteDialog.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000089 /* ConfirmDeleteDialog.m */; };
@@ -278,6 +279,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4E5F6000000000A01 /* RotatingOAuthInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RotatingOAuthInfo.h; path = ../common/RotatingOAuthInfo.h; sourceTree = SOURCE_ROOT; };
+		A1B2C3D4E5F6000000000A02 /* RotatingOAuthInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RotatingOAuthInfo.m; path = ../common/RotatingOAuthInfo.m; sourceTree = SOURCE_ROOT; };
 		A1B2C3D4E5F6000000000080 /* SXControls.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SXControls.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000081 /* SXControls.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SXControls.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000084 /* EmptyStateView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EmptyStateView.h; sourceTree = "<group>"; };
@@ -792,6 +795,8 @@
 			children = (
 				F4CD3DAA0B85701100084479 /* ZKLoginController.h */,
 				F4CD3DAB0B85701100084479 /* ZKLoginController.m */,
+				A1B2C3D4E5F6000000000A01 /* RotatingOAuthInfo.h */,
+				A1B2C3D4E5F6000000000A02 /* RotatingOAuthInfo.m */,
 				F4A2B960271F334700C20A42 /* CredentialsController.h */,
 				F4A2B961271F334700C20A42 /* CredentialsController.m */,
 				F4F0D5D2270A719B00C53B0C /* Login.xib */,
@@ -1236,6 +1241,7 @@
 				F4D8DC792569CFF7002C9FC1 /* SObject.m in Sources */,
 				F4FCF8260B644DDD003C4A5C /* DetailsController.m in Sources */,
 				F4CD3DAD0B85701100084479 /* ZKLoginController.m in Sources */,
+				A1B2C3D4E5F6000000000A03 /* RotatingOAuthInfo.m in Sources */,
 				F4CD3DBA0B8572DB00084479 /* credential.m in Sources */,
 				F4D6E18A0BD70DA200813881 /* EditableQueryResultWrapper.m in Sources */,
 				F4408FEF2562F4C1005E8BB7 /* QueryColumns.m in Sources */,

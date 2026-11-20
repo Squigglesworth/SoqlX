@@ -26,6 +26,7 @@
 #import "Defaults.h"
 #import "NSArray+Partition.h"
 #import <CommonCrypto/CommonDigest.h>
+#import "RotatingOAuthInfo.h"
 
 int DEFAULT_API_VERSION = 58;
 
@@ -355,9 +356,9 @@ static NSString *formEncode(NSString *v) {
             // id is https://{authHost}/id/{orgId}/{userId}; the auth host is what later token refreshes go to.
             NSString *idUrl = [tokens[@"id"] isKindOfClass:[NSString class]] ? tokens[@"id"] : authHost.absoluteString;
             NSString *refresh = [tokens[@"refresh_token"] isKindOfClass:[NSString class]] ? tokens[@"refresh_token"] : nil;
-            ZKOAuthInfo *auth = [ZKOAuthInfo oauthInfoWithRefreshToken:refresh
-                                                              authHost:[NSURL URLWithString:idUrl]
-                                                             sessionId:tokens[@"access_token"]
+            RotatingOAuthInfo *auth = [RotatingOAuthInfo oauthInfoWithRefreshToken:refresh
+                                                                          authHost:[NSURL URLWithString:idUrl]
+                                                                         sessionId:tokens[@"access_token"]
                                                            instanceUrl:[NSURL URLWithString:tokens[@"instance_url"]]
                                                               clientId:[ZKLoginController oauthConsumerKey]];
             auth.apiVersion = apiVersion;
@@ -388,6 +389,7 @@ static NSString *formEncode(NSString *v) {
             if ([cred.username isEqualToString:result.userName] && [cred.server.host isEqualToString:auth.authHostUrl.host]) {
                 // update the keychain entry with the new refresh token
                 [cred updateToken:auth.refreshToken];
+                [self keepCredential:cred inStepWith:auth];
                 // and we're done
                 [self closeLoginUi];
                 [self.delegate loginController:self loginCompleted:c];
@@ -400,9 +402,10 @@ static NSString *formEncode(NSString *v) {
                     altButton:@"No thanks"
                     completionHandler:^(NSModalResponse returnCode) {
                         if (NSAlertFirstButtonReturn == returnCode) {
-                            [Credential createCredential:auth.authHostUrl
-                                                username:result.userName
-                                            refreshToken:auth.refreshToken];
+                            Credential *created = [Credential createCredential:auth.authHostUrl
+                                                                      username:result.userName
+                                                                  refreshToken:auth.refreshToken];
+                            [self keepCredential:created inStepWith:auth];
                         }
                         [self closeLoginUi];
                         [self.delegate loginController:self loginCompleted:c];
@@ -446,19 +449,40 @@ static NSString *formEncode(NSString *v) {
     };
 
     ZKSforceClient *c = [self newClient:self.preferedApiVersion];
-    [c loginWithRefreshToken:cred.token
-                     authUrl:cred.server
-            oAuthConsumerKey:[ZKLoginController oauthConsumerKey]
-                   failBlock:failBlock
-               completeBlock:^{
-        [self oauthCurrentUserInfoWithDowngrade:c
-                                      failBlock:failBlock
-                                  completeBlock:^(ZKUserInfo *result) {
-            [self closeLoginUi];
-            [self addUserToMru:result.userName host:cred.server.host];
-            [self.delegate loginController:self loginCompleted:c];
-        }];
+    RotatingOAuthInfo *auth = [RotatingOAuthInfo oauthInfoWithRefreshToken:cred.token
+                                                                  authHost:cred.server
+                                                                 sessionId:nil
+                                                               instanceUrl:nil
+                                                                  clientId:[ZKLoginController oauthConsumerKey]];
+    auth.apiVersion = self.preferedApiVersion;
+    [self keepCredential:cred inStepWith:auth];
+    [auth refresh:^(NSError *ex) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (ex != nil) {
+                failBlock(ex);
+                return;
+            }
+            c.authenticationInfo = auth;
+            [self oauthCurrentUserInfoWithDowngrade:c
+                                          failBlock:failBlock
+                                      completeBlock:^(ZKUserInfo *result) {
+                [self closeLoginUi];
+                [self addUserToMru:result.userName host:cred.server.host];
+                [self.delegate loginController:self loginCompleted:c];
+            }];
+        });
     }];
+}
+
+// With refresh token rotation every refresh invalidates the stored token, so write each new
+// one back to the keychain entry as it arrives.
+-(void)keepCredential:(Credential *)cred inStepWith:(ZKOAuthInfo *)auth {
+    if (cred == nil || ![auth isKindOfClass:[RotatingOAuthInfo class]]) {
+        return;
+    }
+    ((RotatingOAuthInfo *)auth).onRefreshTokenRotated = ^(NSString *newRefreshToken) {
+        [cred updateToken:newRefreshToken];
+    };
 }
 
 -(IBAction)showLoginHelp:(id)sender {
