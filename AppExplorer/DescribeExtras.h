@@ -49,6 +49,7 @@
 
 @interface ZKDescribeField (Documentation)
 -(NSString*)documentation;
+-(NSString*)typeDescription;   // "reference to Account", "string(80)", "currency(18,2)"
 @end
 
 // Longer hover text: the facts first, then the capabilities under "Metadata:".

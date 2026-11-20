@@ -106,14 +106,29 @@
 }
 
 -(void)reloadOutline {
+    // Rows below Recent shift when it changes, so keep the selection on the same item, not the same row.
+    NSInteger selectedRow = outlineView.selectedRow;
+    id selected = selectedRow >= 0 ? [outlineView itemAtRow:selectedRow] : nil;
     [outlineView reloadData];
     [outlineView expandItem:self.recentGroup];
     [outlineView expandItem:self.allGroup];
+    if (selected == nil) return;
+    NSInteger r = [outlineView rowForItem:selected];
+    if (r >= 0) {
+        if (r != outlineView.selectedRow)
+            [outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:r] byExtendingSelection:NO];
+    } else {
+        [outlineView deselectAll:nil];
+    }
 }
 
 -(void)setOrgId:(NSString *)orgId {
+    NSArray<NSString*> *recents = orgId.length > 0 ? [RecentObjects namesForOrgId:orgId] : @[];
+    if ((orgId == _orgId || [orgId isEqualToString:_orgId]) && [recents isEqualToArray:self.recentNames]) {
+        return;
+    }
     _orgId = [orgId copy];
-    self.recentNames = _orgId.length > 0 ? [RecentObjects namesForOrgId:_orgId] : @[];
+    self.recentNames = recents;
     [self updateFilter];
     [self reloadOutline];
 }
@@ -237,7 +252,7 @@
     NSNumberFormatter *nf = [NSNumberFormatter new];
     nf.numberStyle = NSNumberFormatterDecimalStyle;
     NSString *total = [nf stringFromNumber:@(types.count)];
-    self.allGroup.detail = ft.count == types.count ? total
+    self.allGroup.detail = types.count == 0 ? nil : ft.count == types.count ? total
         : [NSString stringWithFormat:@"%@ of %@", [nf stringFromNumber:@(ft.count)], total];
     [self setFilteredTypes:ft recents:recents];
 }
@@ -325,6 +340,8 @@
             self->sortedDescribes[k] = [d.fields sortedArrayUsingDescriptors:@[fieldSortOrder]];
         }
         [outlineView reloadItem:descGlobalSobjects[k] reloadChildren:YES];
+        SidebarRecentItem *recent = self.recentItemCache[k];
+        if (recent != nil) [outlineView reloadItem:recent];
     }
     [self updateFilter];
 }
@@ -395,6 +412,11 @@
     return [item isKindOfClass:[SidebarGroup class]];
 }
 
+// Groups stay open: no disclosure triangle over their titles, and no way to lose the list.
+-(BOOL)outlineView:(NSOutlineView *)outlineView shouldShowOutlineCellForItem:(id)item {
+    return ![item isKindOfClass:[SidebarGroup class]];
+}
+
 -(BOOL)outlineView:(NSOutlineView *)outlineView shouldSelectItem:(id)item {
     return ![item isKindOfClass:[SidebarGroup class]];
 }
@@ -409,7 +431,7 @@
     if ([withLength containsObject:f.type] && f.length > 0)
         return [NSString stringWithFormat:@"%@(%ld)", f.type, (long)f.length];
     NSSet *withScale = [NSSet setWithArray:@[@"double", @"currency", @"percent"]];
-    if ([withScale containsObject:f.type])
+    if ([withScale containsObject:f.type] && f.precision > 0)
         return [NSString stringWithFormat:@"%@(%ld,%ld)", f.type, (long)f.precision, (long)f.scale];
     return f.type;
 }

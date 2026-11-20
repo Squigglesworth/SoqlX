@@ -43,6 +43,7 @@
 
 -(void)awakeFromNib {
     [super awakeFromNib];
+    self.style = NSTableViewStyleFullWidth;
     self.selectionHighlightStyle = NSTableViewSelectionHighlightStyleRegular;
     self.backgroundColor = [SXTokens surface];
     self.intercellSpacing = NSMakeSize(0, 0);
@@ -79,6 +80,28 @@
 -(void)mouseExited:(NSEvent *)event {
     [super mouseExited:event];
     [self setHoverRow:-1];
+}
+
+// The row under a still pointer changes when the content moves under it.
+-(void)refreshHoverFromPointer {
+    if (self.window == nil) return;
+    NSPoint p = [self convertPoint:self.window.mouseLocationOutsideOfEventStream fromView:nil];
+    [self setHoverRow:NSPointInRect(p, self.visibleRect) ? [self rowAtPoint:p] : -1];
+}
+
+-(void)scrollWheel:(NSEvent *)event {
+    [super scrollWheel:event];
+    [self refreshHoverFromPointer];
+}
+
+-(void)expandItem:(id)item expandChildren:(BOOL)expandChildren {
+    [super expandItem:item expandChildren:expandChildren];
+    [self refreshHoverFromPointer];
+}
+
+-(void)collapseItem:(id)item collapseChildren:(BOOL)collapseChildren {
+    [super collapseItem:item collapseChildren:collapseChildren];
+    [self refreshHoverFromPointer];
 }
 
 -(void)reloadData {
