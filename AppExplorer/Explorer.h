@@ -100,6 +100,7 @@
 // What the org told us at login (nil until the Organization query completes).
 @property (strong) OrgInfo *orgInfo;
 @property (strong) NSButton *sidebarFilterButton;   // filter menu button above the object tree
+@property (strong) NSButton *sidebarRefreshButton;  // refresh metadata, beside the filter button
 
 // Run honours this ("Include deleted and archived"), going through queryAll when set.
 @property (assign) BOOL includeDeleted;
@@ -138,6 +139,7 @@
 
 @property (readonly) BOOL hasSelectedForDelete;
 @property (readonly) BOOL canQueryMore;
+@property (readonly) BOOL canDownloadResults;
 @property (readonly, copy) NSArray *SObjects;
 @property (readonly, strong) DescribeListDataSource *describeDataSource;
 @property (readonly, strong) NSString *selectedSObjectName;

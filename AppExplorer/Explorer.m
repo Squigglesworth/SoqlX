@@ -72,6 +72,7 @@ static void *kQueryChromeContext = &kQueryChromeContext;
 @property (strong) NSTextField *editorMessage;
 @property (strong) NSButton *queryMoreButton;
 @property (strong) NSButton *deleteButton;
+@property (strong) NSButton *downloadButton;
 @property (strong) EmptyStateView *resultsEmptyState;
 @property (copy) NSString *lastQueryTiming;
 @property (assign) BOOL observingDeleteTitle;
@@ -112,7 +113,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 
 +(NSSet *)keyPathsForValuesAffectingValueForKey:(NSString *)key {
     NSSet *paths = [super keyPathsForValuesAffectingValueForKey:key];
-    if ([key isEqualToString:@"canQueryMore"])
+    if ([key isEqualToString:@"canQueryMore"] || [key isEqualToString:@"canDownloadResults"])
         return [paths setByAddingObjectsFromArray:@[@"rootResults.queryResult"]];
     if ([key isEqualToString:@"titleUserInfo"])
         return [paths setByAddingObjectsFromArray:@[@"sforce", @"queryFilename", @"apexFilename", @"selectedTabViewIdentifier", @"orgInfo"]];
@@ -832,38 +833,55 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     sf.size.height = NSHeight(splitParent.bounds) - NSMinY(sf);
     split.frame = sf;
 
-    // Filter field and filter button pinned to the top of the sidebar pane, tree below.
-    const CGFloat header = SXControlMD + SXSpace2 * 2;
+    // Filter field, refresh and filter buttons pinned to the top of the sidebar pane, tree below.
+    // Twice the size of a standard small control row, so the field and icons are easy to hit.
+    const CGFloat buttonSize = SXControlSM * 2;     // 48
+    const CGFloat searchHeight = 22 * 2;            // 44
+    const CGFloat header = buttonSize + SXSpace2 * 2;
     NSRect pb = pane.bounds;
     treeScroll.frame = NSMakeRect(0, 0, NSWidth(pb), NSHeight(pb) - header);
     treeScroll.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     treeScroll.drawsBackground = YES;
     treeScroll.backgroundColor = [SXTokens surface];
 
-    NSButton *filterButton = [NSButton buttonWithImage:[NSImage imageWithSystemSymbolName:@"line.3.horizontal.decrease.circle"
-                                                                  accessibilityDescription:@"Filter objects"]
-                                                target:self action:@selector(showSidebarFilterMenu:)];
-    filterButton.bordered = NO;
-    filterButton.toolTip = @"Choose which kinds of objects the list shows";
-    const CGFloat buttonSize = SXControlSM;
-    filterButton.frame = NSMakeRect(NSWidth(pb) - SXSpace2 - buttonSize, NSHeight(pb) - header + (header - buttonSize) / 2, buttonSize, buttonSize);
-    filterButton.autoresizingMask = NSViewMinXMargin | NSViewMinYMargin;
+    NSImageSymbolConfiguration *big = [NSImageSymbolConfiguration configurationWithPointSize:26 weight:NSFontWeightRegular];
+    NSButton *(^iconButton)(NSString *, NSString *, SEL, NSString *) = ^NSButton *(NSString *symbol, NSString *label, SEL action, NSString *tip) {
+        NSImage *img = [[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:label] imageWithSymbolConfiguration:big];
+        NSButton *b = [NSButton buttonWithImage:img target:self action:action];
+        b.bordered = NO;
+        b.imageScaling = NSImageScaleNone;
+        b.contentTintColor = [SXTokens inkMuted];
+        b.toolTip = tip;
+        b.autoresizingMask = NSViewMinXMargin | NSViewMinYMargin;
+        return b;
+    };
+    CGFloat buttonY = NSHeight(pb) - header + (header - buttonSize) / 2;
+    NSButton *filterButton = iconButton(@"line.3.horizontal.decrease.circle", @"Filter objects", @selector(showSidebarFilterMenu:),
+                                        @"Choose which kinds of objects the list shows");
+    filterButton.frame = NSMakeRect(NSWidth(pb) - SXSpace2 - buttonSize, buttonY, buttonSize, buttonSize);
     [pane addSubview:filterButton];
     self.sidebarFilterButton = filterButton;
 
+    NSButton *refreshButton = iconButton(@"arrow.clockwise", @"Refresh metadata", @selector(refreshMetadata:),
+                                         @"Refresh metadata: describe the org again to pick up new objects and fields");
+    refreshButton.frame = NSMakeRect(NSMinX(filterButton.frame) - buttonSize, buttonY, buttonSize, buttonSize);
+    [pane addSubview:refreshButton];
+    self.sidebarRefreshButton = refreshButton;
+
     [search removeFromSuperview];
-    search.controlSize = NSControlSizeRegular;
-    search.font = [SXTokens body];
+    search.controlSize = NSControlSizeLarge;
+    search.font = [SXTokens sans:18 weight:NSFontWeightRegular];
     search.placeholderString = @"Filter objects and fields";
-    CGFloat searchHeight = 22;
     search.frame = NSMakeRect(SXSpace2, NSHeight(pb) - header + (header - searchHeight) / 2,
-                              NSMinX(filterButton.frame) - SXSpace1 - SXSpace2, searchHeight);
+                              NSMinX(refreshButton.frame) - SXSpace1 - SXSpace2, searchHeight);
     search.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
     [pane addSubview:search];
 
-    // The design's sidebar width, unless the user has already sized the split themselves.
+    // The design's sidebar width when nothing is saved, or when a width saved before the larger
+    // header would squeeze the filter field to nothing.
     NSString *autosave = [NSString stringWithFormat:@"NSSplitView Subview Frames %@", split.autosaveName];
-    if (split.autosaveName.length > 0 && [[NSUserDefaults standardUserDefaults] objectForKey:autosave] == nil) {
+    BOOL nothingSaved = split.autosaveName.length > 0 && [[NSUserDefaults standardUserDefaults] objectForKey:autosave] == nil;
+    if (nothingSaved || NSWidth(pane.frame) < 240) {
         [split setPosition:SXSidebarWidth ofDividerAtIndex:0];
     }
     [self updateSidebarFilterButton];
@@ -982,9 +1000,12 @@ typedef NS_ENUM(NSInteger, SidebarFilterTag) {
         SXBandView *rfooter = [[SXBandView alloc] initWithFrame:NSMakeRect(0, 0, NSWidth(cb), kResultsFooterHeight)];
         rfooter.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
         [container addSubview:rfooter];
+        self.downloadButton = [SXControls defaultButtonWithTitle:@"Download Results" target:self action:@selector(saveQueryResults:)];
+        self.downloadButton.toolTip = @"Save the results to a CSV file (File, Save Query Results)";
         self.queryMoreButton = [SXControls defaultButtonWithTitle:@"Query more" target:self action:@selector(queryMore:)];
         self.deleteButton = [SXControls dangerButtonWithTitle:@"Delete 0 records" target:self action:@selector(deleteCheckedRows:)];
-        [self placeFooterControls:rfooter leading:@[self.queryMoreButton] trailing:@[self.deleteButton]];
+        [self placeFooterControls:rfooter leading:@[self.downloadButton, self.queryMoreButton] trailing:@[self.deleteButton]];
+        [self.downloadButton bind:NSEnabledBinding toObject:self withKeyPath:@"canDownloadResults" options:nil];
         [self.queryMoreButton bind:NSHiddenBinding toObject:self withKeyPath:@"canQueryMore" options:@{NSValueTransformerNameBindingOption: NSNegateBooleanTransformerName}];
         [self.queryMoreButton bind:NSEnabledBinding toObject:self withKeyPath:@"isQuerying" options:@{NSValueTransformerNameBindingOption: NSNegateBooleanTransformerName}];
         [self.deleteButton bind:NSEnabledBinding toObject:self withKeyPath:@"hasSelectedForDelete" options:nil];
@@ -1305,6 +1326,10 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
         return;
     }
     [self saveQuery:s];
+}
+
+-(BOOL)canDownloadResults {
+    return self.rootResults.queryResult.size > 0;
 }
 
 // Called via "Save Query Results" Menu item

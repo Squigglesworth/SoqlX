@@ -24,6 +24,7 @@
 		A1B2C3D4E5F6000000000D73 /* OrgSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D72 /* OrgSettings.m */; };
 		A1B2C3D4E5F6000000000D74 /* OrgSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D72 /* OrgSettings.m */; };
 		A1B2C3D4E5F6000000000D76 /* OrgSettingsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */; };
+		A1B2C3D4E5F6000000000E1B /* ResultsTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E1A /* ResultsTableView.m */; };
 		A1B2C3D4E5F6000000000E03 /* SObjectKinds.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E02 /* SObjectKinds.m */; };
 		A1B2C3D4E5F6000000000E06 /* SidebarFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E05 /* SidebarFilter.m */; };
 		A1B2C3D4E5F6000000000E09 /* RecentObjects.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E08 /* RecentObjects.m */; };
@@ -313,6 +314,8 @@
 		A1B2C3D4E5F6000000000D71 /* OrgSettings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OrgSettings.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D72 /* OrgSettings.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OrgSettings.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000D75 /* OrgSettingsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OrgSettingsTests.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E19 /* ResultsTableView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ResultsTableView.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E1A /* ResultsTableView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ResultsTableView.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000E01 /* SObjectKinds.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SObjectKinds.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000E02 /* SObjectKinds.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SObjectKinds.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000E04 /* SidebarFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SidebarFilter.h; sourceTree = "<group>"; };
@@ -626,6 +629,8 @@
 				A1B2C3D4E5F6000000000D52 /* DesignTokens.m */,
 				A1B2C3D4E5F6000000000D71 /* OrgSettings.h */,
 				A1B2C3D4E5F6000000000D72 /* OrgSettings.m */,
+				A1B2C3D4E5F6000000000E19 /* ResultsTableView.h */,
+				A1B2C3D4E5F6000000000E1A /* ResultsTableView.m */,
 				A1B2C3D4E5F6000000000E01 /* SObjectKinds.h */,
 				A1B2C3D4E5F6000000000E02 /* SObjectKinds.m */,
 				A1B2C3D4E5F6000000000E04 /* SidebarFilter.h */,
@@ -1318,6 +1323,7 @@
 				A1B2C3D4E5F6000000000D03 /* SoqlDocs.m in Sources */,
 				A1B2C3D4E5F6000000000D53 /* DesignTokens.m in Sources */,
 				A1B2C3D4E5F6000000000D73 /* OrgSettings.m in Sources */,
+				A1B2C3D4E5F6000000000E1B /* ResultsTableView.m in Sources */,
 				A1B2C3D4E5F6000000000E03 /* SObjectKinds.m in Sources */,
 				A1B2C3D4E5F6000000000E06 /* SidebarFilter.m in Sources */,
 				A1B2C3D4E5F6000000000E09 /* RecentObjects.m in Sources */,
