@@ -53,29 +53,29 @@
     NSDictionary *attrs;
     if (v == nil || v == [NSNull null]) {
         text = @"null";
-        attrs = @{ NSFontAttributeName: [SXTokens data],
+        attrs = @{ NSFontAttributeName: [SXTokens scaled:[SXTokens data]],
                    NSForegroundColorAttributeName: [SXTokens inkSubtle],
                    NSParagraphStyleAttributeName: ps };
     } else if ([self isLinkValue]) {
         text = (NSString *)v;
-        attrs = @{ NSFontAttributeName: [SXTokens data],
+        attrs = @{ NSFontAttributeName: [SXTokens scaled:[SXTokens data]],
                    NSForegroundColorAttributeName: [SXTokens link],
                    NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
                    NSParagraphStyleAttributeName: ps };
     } else if ([v isKindOfClass:[NSNumber class]]) {
         ps.alignment = NSTextAlignmentRight;
         text = [(NSNumber *)v stringValue];
-        attrs = @{ NSFontAttributeName: [SXTokens data],
+        attrs = @{ NSFontAttributeName: [SXTokens scaled:[SXTokens data]],
                    NSForegroundColorAttributeName: [SXTokens ink],
                    NSParagraphStyleAttributeName: ps };
     } else if ([v isKindOfClass:[NSDate class]]) {
         text = [v description];
-        attrs = @{ NSFontAttributeName: [SXTokens data],
+        attrs = @{ NSFontAttributeName: [SXTokens scaled:[SXTokens data]],
                    NSForegroundColorAttributeName: [SXTokens ink],
                    NSParagraphStyleAttributeName: ps };
     } else {
         text = [v isKindOfClass:[NSString class]] ? (NSString *)v : [v description];
-        attrs = @{ NSFontAttributeName: [SXTokens body],
+        attrs = @{ NSFontAttributeName: [SXTokens scaled:[SXTokens body]],
                    NSForegroundColorAttributeName: [SXTokens ink],
                    NSParagraphStyleAttributeName: ps };
     }

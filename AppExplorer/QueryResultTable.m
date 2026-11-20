@@ -128,7 +128,7 @@ const NSInteger DEF_ID_WIDTH = 165;
     if (table != nil) {
         table.usesAlternatingRowBackgroundColors = NO;
         table.gridStyleMask = NSTableViewGridNone;
-        table.rowHeight = SXRowCompact;
+        table.rowHeight = [SXTokens rowHeight];
         table.backgroundColor = [SXTokens surface];
         table.intercellSpacing = NSMakeSize(3, 0);
         table.selectionHighlightStyle = NSTableViewSelectionHighlightStyleRegular;
@@ -486,8 +486,16 @@ const NSInteger DEF_ID_WIDTH = 165;
 
 -(NSFont*)tableCellFont {
     // Columns are measured in the font most cells draw with (Ids, numbers, dates are mono data;
-    // free text is the sans body at the same size).
-    return [SXTokens data];
+    // free text is the sans body at the same size), at the text size chosen in Settings.
+    return [SXTokens scaled:[SXTokens data]];
+}
+
+-(void)applyDisplaySettings {
+    NSTableView *t = self.table;
+    CGFloat h = [SXTokens rowHeight];
+    if (t == nil) return;
+    if (t.rowHeight != h) t.rowHeight = h;
+    [t reloadData];
 }
 
 @end

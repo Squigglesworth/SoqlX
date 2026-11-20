@@ -28,6 +28,9 @@ static NSString *const kColorHexKey = @"colorHex";
 static NSString *const kKindOverrideKey = @"kindOverride";
 static NSString *const kPreventDeleteKey = @"preventDelete";
 static NSString *const kReadOnlyKey = @"readOnly";
+static NSString *const kLastKnownNameKey = @"lastKnownName";
+static NSString *const kLastKnownHostKey = @"lastKnownHost";
+static NSString *const kDetectedKindKey = @"detectedKind";
 
 static NSUserDefaults *sDefaultsOverride = nil;
 
@@ -78,6 +81,9 @@ SXOrgKind SXOrgKindFromWord(NSString *word, BOOL *ok) {
 @interface OrgSettings ()
 @property (copy, readwrite) NSString *orgId;
 @property (assign) BOOL storedPreventDelete;
+@property (copy, readwrite, nullable) NSString *lastKnownName;
+@property (copy, readwrite, nullable) NSString *lastKnownHost;
+@property (copy, readwrite, nullable) NSString *detectedKindWord;
 @end
 
 @implementation OrgSettings
@@ -107,6 +113,12 @@ SXOrgKind SXOrgKindFromWord(NSString *word, BOOL *ok) {
         if ([v respondsToSelector:@selector(boolValue)]) s.storedPreventDelete = [v boolValue];
         v = d[kReadOnlyKey];
         if ([v respondsToSelector:@selector(boolValue)]) s.readOnly = [v boolValue];
+        v = d[kLastKnownNameKey];
+        if ([v isKindOfClass:[NSString class]] && [v length] > 0) s.lastKnownName = v;
+        v = d[kLastKnownHostKey];
+        if ([v isKindOfClass:[NSString class]] && [v length] > 0) s.lastKnownHost = v;
+        v = d[kDetectedKindKey];
+        if ([v isKindOfClass:[NSString class]] && [v length] > 0) s.detectedKindWord = v;
     }
     return s;
 }
@@ -126,10 +138,32 @@ SXOrgKind SXOrgKindFromWord(NSString *word, BOOL *ok) {
         kColorHexKey: self.colorHex ? self.colorHex : @"",
         kKindOverrideKey: self.kindOverride ? self.kindOverride : @"",
         kPreventDeleteKey: @(self.storedPreventDelete),
-        kReadOnlyKey: @(self.readOnly)
+        kReadOnlyKey: @(self.readOnly),
+        kLastKnownNameKey: self.lastKnownName ? self.lastKnownName : @"",
+        kLastKnownHostKey: self.lastKnownHost ? self.lastKnownHost : @"",
+        kDetectedKindKey: self.detectedKindWord ? self.detectedKindWord : @""
     };
     [OrgSettingsDefaults() setObject:all forKey:kOrgSettingsKey];
     [[NSNotificationCenter defaultCenter] postNotificationName:OrgSettingsDidChangeNotification object:self.orgId];
+}
+
++(void)recordOrgInfo:(OrgInfo *)info {
+    NSString *orgId = info.orgId;
+    if (orgId.length == 0) return;
+    BOOL existed = [[self storedDictionary][orgId] isKindOfClass:[NSDictionary class]];
+    OrgSettings *s = [self settingsForOrgId:orgId];
+    NSString *name = info.name.length > 0 ? info.name : nil;
+    NSString *host = info.instanceHost.length > 0 ? info.instanceHost : nil;
+    NSString *kind = SXOrgKindWord([info kind]);
+    BOOL changed = !existed ||
+        ![(s.lastKnownName ? s.lastKnownName : @"") isEqualToString:(name ? name : @"")] ||
+        ![(s.lastKnownHost ? s.lastKnownHost : @"") isEqualToString:(host ? host : @"")] ||
+        ![(s.detectedKindWord ? s.detectedKindWord : @"") isEqualToString:kind];
+    if (!changed) return;
+    s.lastKnownName = name;
+    s.lastKnownHost = host;
+    s.detectedKindWord = kind;
+    [s save];
 }
 
 +(void)removeSettingsForOrgId:(NSString *)orgId {

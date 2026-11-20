@@ -79,6 +79,11 @@ NS_ASSUME_NONNULL_BEGIN
 // YES if the bundled fonts registered with the system (so sans:/mono: return Inter/JetBrains Mono).
 +(BOOL)bundledFontsAvailable;
 
+// Settings, Appearance. Text scale applies to the results, sidebar and details; row height follows density.
++(CGFloat)textScale;                       // PREF_TEXT_SCALE, clamped to 0.8 ... 1.5, 1.0 when unset
++(NSFont*)scaled:(NSFont*)font;            // font at textScale times its size
++(CGFloat)rowHeight;                       // SXRowCompact, or SXRowComfortable when PREF_DENSITY is "comfortable"
+
 @end
 
 // MARK: Spacing (4px scale)

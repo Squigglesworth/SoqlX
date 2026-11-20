@@ -53,7 +53,8 @@ SXOrgKind SXOrgKindFromWord(NSString * _Nullable word, BOOL * _Nullable ok);
 @end
 
 // Per-org, user-set settings, persisted in NSUserDefaults under "OrgSettings"
-// as {orgId: {label, colorHex, kindOverride, preventDelete, readOnly}}.
+// as {orgId: {label, colorHex, kindOverride, preventDelete, readOnly,
+// lastKnownName, lastKnownHost, detectedKind}}.
 @interface OrgSettings : NSObject
 @property (copy, readonly) NSString *orgId;
 @property (copy, nullable) NSString *label;          // nil/empty = use the org name
@@ -61,6 +62,15 @@ SXOrgKind SXOrgKindFromWord(NSString * _Nullable word, BOOL * _Nullable ok);
 @property (copy, nullable) NSString *kindOverride;   // an SXOrgKindWord, or nil to use the detected kind
 @property (assign) BOOL preventDelete;
 @property (assign) BOOL readOnly;                    // readOnly implies preventDelete (getter returns YES when readOnly)
+
+// Last values seen at login. Written only by +recordOrgInfo:, never by the user.
+@property (copy, readonly, nullable) NSString *lastKnownName;
+@property (copy, readonly, nullable) NSString *lastKnownHost;
+@property (copy, readonly, nullable) NSString *detectedKindWord;   // SXOrgKindWord of info.kind
+
+// Stores name, host and detected kind for info.orgId, keeping the user's settings.
+// Saves (and posts the notification) only when one of the three changed.
++(void)recordOrgInfo:(nullable OrgInfo *)info;
 
 // Never nil; unsaved defaults when nothing is stored.
 +(instancetype)settingsForOrgId:(NSString *)orgId;

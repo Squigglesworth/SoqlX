@@ -38,5 +38,7 @@
 // this, windowVisible shows/hides the inspector instead of the panel.
 - (void)dockInInspector:(ShellView *)shell;
 @property (weak, nonatomic) ShellView *inspectorHost;
+// Re-reads the text size from Settings, scaling the nib's fonts and row height.
+- (void)applyTextScale;
 
 @end

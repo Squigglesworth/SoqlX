@@ -48,6 +48,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (assign, nonatomic) BOOL inspectorVisible;
 -(void)setInspectorVisible:(BOOL)visible animated:(BOOL)animated;
 
+// A full page (Settings) that covers everything right of the rail. nil shows the work area again.
+@property (strong, nonatomic, nullable) NSView *pageView;
+
 @end
 
 NS_ASSUME_NONNULL_END

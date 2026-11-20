@@ -24,8 +24,12 @@
 #import "NSTableView_additions.h"
 #import "DataSources.h"
 #import "Shell/ShellView.h"
+#import "DesignTokens.h"
+#import <objc/runtime.h>
 
 static NSString *SHOWING_DETAILS = @"details";
+
+static const void *kBaseFontKey = &kBaseFontKey;
 
 @implementation DetailsController
 
@@ -102,6 +106,27 @@ static NSString *SHOWING_DETAILS = @"details";
 
 - (IBAction) copy:(id)sender {
     [detailsTable zkCopyTableDataToClipboard];
+}
+
+- (void)applyTextScale {
+    if (detailsTable == nil) return;
+    // The nib's sizes are the 1.0 scale; remember them the first time through.
+    NSNumber *baseRow = objc_getAssociatedObject(detailsTable, kBaseFontKey);
+    if (baseRow == nil) {
+        baseRow = @(detailsTable.rowHeight);
+        objc_setAssociatedObject(detailsTable, kBaseFontKey, baseRow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        for (NSTableColumn *c in detailsTable.tableColumns) {
+            NSCell *cell = c.dataCell;
+            if (cell.font != nil) objc_setAssociatedObject(c, kBaseFontKey, cell.font, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+    }
+    CGFloat scale = [SXTokens textScale];
+    for (NSTableColumn *c in detailsTable.tableColumns) {
+        NSFont *base = objc_getAssociatedObject(c, kBaseFontKey);
+        if (base != nil) ((NSCell *)c.dataCell).font = [SXTokens scaled:base];
+    }
+    detailsTable.rowHeight = ceil(baseRow.doubleValue * MAX(1.0, scale));
+    [detailsTable reloadData];
 }
 
 @end

@@ -30,6 +30,7 @@
 #import "SidebarFilter.h"
 #import "SidebarItems.h"
 #import "RecentObjects.h"
+#import "DesignTokens.h"
 
 @interface DescribeListDataSource ()
 -(void)updateFilter;
@@ -94,6 +95,8 @@
 }
 
 -(void)prefsChanged:(NSNotification *)notif {
+    CGFloat rowHeight = [SXTokens rowHeight];
+    if (outlineView != nil && outlineView.rowHeight != rowHeight) outlineView.rowHeight = rowHeight;
     // Any window's filter menu, or a query in another window of this org, lands here.
     SidebarFilter *f = [SidebarFilter filterFromDefaults:[NSUserDefaults standardUserDefaults]];
     NSArray<NSString*> *recents = self.orgId.length > 0 ? [RecentObjects namesForOrgId:self.orgId] : @[];

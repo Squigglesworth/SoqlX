@@ -21,6 +21,7 @@
 
 #import "ConfirmDeleteDialog.h"
 #import "DesignTokens.h"
+#import "Prefs.h"
 #import <objc/runtime.h>
 
 static const void *kDelegateKey = &kDelegateKey;
@@ -65,7 +66,9 @@ static const void *kDelegateKey = &kDelegateKey;
 
 +(void)confirmDeleteOf:(NSUInteger)count objectName:(NSString *)name kind:(SXOrgKind)kind
                 window:(NSWindow *)window completion:(void (^)(BOOL))completion {
-    if (![self needsConfirmationForCount:count kind:kind]) {
+    // Settings, Safety: "Ask before every delete" turns the plain confirmation on everywhere.
+    BOOL askAlways = [[NSUserDefaults standardUserDefaults] boolForKey:PREF_CONFIRM_ALL_DELETES];
+    if (!askAlways && ![self needsConfirmationForCount:count kind:kind]) {
         completion(YES);
         return;
     }

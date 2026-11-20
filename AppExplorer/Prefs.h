@@ -57,3 +57,13 @@ extern NSString *PREF_BRACES_MISMATCH_BEEP;
 
 // Appearance: "system", "light" or "dark".
 extern NSString *PREF_APPEARANCE;
+
+// Row density for the results grid and the sidebar: "compact" (28pt rows) or "comfortable" (36pt).
+extern NSString *PREF_DENSITY;
+
+// Text size multiplier for the results, sidebar and details (0.9, 1.0, 1.15, 1.3). The editors
+// follow their own font, set in Settings, Appearance.
+extern NSString *PREF_TEXT_SCALE;
+
+// Ask before every delete in every org, not only where the safety rules require it.
+extern NSString *PREF_CONFIRM_ALL_DELETES;

@@ -89,15 +89,15 @@ static NSSize measure(NSString *s, NSDictionary *attrs) {
         }
         case SidebarRowField: {
             NSColor *c = self.standout ? [SXTokens accentInk] : [SXTokens inkMuted];
-            nameAttrs = [self attributesWithFont:(self.selectedRow ? [SXTokens dataStrong] : [SXTokens data]) color:c];
-            detailAttrs = [self attributesWithFont:[SXTokens mono:11 weight:400] color:[SXTokens inkSubtle]];
+            nameAttrs = [self attributesWithFont:[SXTokens scaled:(self.selectedRow ? [SXTokens dataStrong] : [SXTokens data])] color:c];
+            detailAttrs = [self attributesWithFont:[SXTokens scaled:[SXTokens mono:11 weight:400]] color:[SXTokens inkSubtle]];
             break;
         }
         case SidebarRowObject:
         default: {
             NSColor *c = self.dimmed ? [SXTokens inkMuted] : [SXTokens ink];
             if (self.standout) c = [SXTokens accentInk];
-            nameAttrs = [self attributesWithFont:(self.selectedRow ? [SXTokens bodyStrong] : [SXTokens body]) color:c];
+            nameAttrs = [self attributesWithFont:[SXTokens scaled:(self.selectedRow ? [SXTokens bodyStrong] : [SXTokens body])] color:c];
             detailAttrs = [self attributesWithFont:[SXTokens caption] color:[SXTokens inkSubtle]];
             break;
         }

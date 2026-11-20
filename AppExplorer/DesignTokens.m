@@ -20,6 +20,7 @@
 //
 
 #import "DesignTokens.h"
+#import "Prefs.h"
 
 const CGFloat SXSpace1 = 4;
 const CGFloat SXSpace2 = 8;
@@ -147,6 +148,26 @@ static const NSUInteger WeightAxisTag = 0x77676874;
         NSForegroundColorAttributeName: [self inkMuted],
         NSKernAttributeName: @(11 * 0.06),
     };
+}
+
+// MARK: - Text size and density
+
++(CGFloat)textScale {
+    id v = [[NSUserDefaults standardUserDefaults] objectForKey:PREF_TEXT_SCALE];
+    double scale = [v respondsToSelector:@selector(doubleValue)] ? [v doubleValue] : 1.0;
+    if (scale <= 0) return 1.0;
+    return MIN(1.5, MAX(0.8, scale));
+}
+
++(NSFont*)scaled:(NSFont*)font {
+    CGFloat scale = [self textScale];
+    if (font == nil || scale == 1.0) return font;
+    return [NSFont fontWithDescriptor:font.fontDescriptor size:round(font.pointSize * scale * 2) / 2] ?: font;
+}
+
++(CGFloat)rowHeight {
+    NSString *density = [[NSUserDefaults standardUserDefaults] stringForKey:PREF_DENSITY];
+    return [density isEqualToString:@"comfortable"] ? SXRowComfortable : SXRowCompact;
 }
 
 @end

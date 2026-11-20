@@ -52,6 +52,8 @@
 @property (copy, nonatomic) NSString *instanceHost;
 
 -(void)showHideErrorColumn;
+// Re-reads density and text size (Settings, Appearance). Column widths follow on the next query.
+-(void)applyDisplaySettings;
 -(void)addQueryMoreResults:(ZKQueryResult *)queryResult;
 
 @end

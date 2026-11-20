@@ -49,7 +49,7 @@
     self.intercellSpacing = NSMakeSize(0, 0);
     self.indentationPerLevel = 14.0;
     self.floatsGroupRows = NO;
-    self.rowHeight = SXRowCompact;
+    self.rowHeight = [SXTokens rowHeight];
     self.focusRingType = NSFocusRingTypeNone;
 }
 

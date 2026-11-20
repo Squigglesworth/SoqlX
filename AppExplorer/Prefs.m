@@ -33,3 +33,6 @@ NSString *PREF_SOQL_POPUP_COMPLETIONS = @"SoqlCompletions";
 NSString *PREF_SOQL_UPPERCASE_KEYWORDS = @"SoqlUppercaseKeywords";
 NSString *PREF_BRACES_MISMATCH_BEEP = @"BracesMismatchBeep";
 NSString *PREF_APPEARANCE = @"Appearance";
+NSString *PREF_DENSITY = @"Density";
+NSString *PREF_TEXT_SCALE = @"TextScale";
+NSString *PREF_CONFIRM_ALL_DELETES = @"ConfirmDeletesEverywhere";

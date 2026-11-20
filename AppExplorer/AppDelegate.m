@@ -60,6 +60,9 @@
     defaults[PREF_SOQL_UPPERCASE_KEYWORDS] = @YES;
     defaults[PREF_BRACES_MISMATCH_BEEP] = @YES;
     defaults[PREF_APPEARANCE] = @"system";
+    defaults[PREF_DENSITY] = @"compact";
+    defaults[PREF_TEXT_SCALE] = @1.0;
+    defaults[PREF_CONFIRM_ALL_DELETES] = @NO;
     defaults[DEF_LOGIN_MRU] = @[];
     
     NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
@@ -128,8 +131,22 @@
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:help]];
 }
 
+// Settings… (⌘,) and the rail's Settings item show the Settings page in the main window.
+// The old Preferences window (prefsWindow) is no longer opened.
 - (IBAction)showPreferences:(id)sender {
-    [self.prefsWindow makeKeyAndOrderFront:sender];
+    SoqlXWindowController *target = nil;
+    id main = NSApp.mainWindow.windowController;
+    if ([main isKindOfClass:[SoqlXWindowController class]]) {
+        target = main;
+    } else {
+        target = self.windowControllers.lastObject;
+    }
+    if (target == nil) {
+        [self openNewWindow:sender];
+        target = self.windowControllers.lastObject;
+    }
+    [target.window makeKeyAndOrderFront:sender];
+    [target.explorer showSettingsSection:nil];
 }
 
 // MARK: - Query > Insert Snippet

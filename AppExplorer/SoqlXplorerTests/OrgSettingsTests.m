@@ -188,4 +188,74 @@ static NSString *const kSuiteName = @"SoqlXOrgSettingsTests";
     XCTAssertNil([s color]);
 }
 
+-(void)testRecordOrgInfoStoresAndKeepsUserFields {
+    OrgSettings *u = [OrgSettings settingsForOrgId:@"00Dxx0000000009"];
+    u.label = @"Mine";
+    u.colorHex = @"#D6A21E";
+    u.preventDelete = YES;
+    u.readOnly = YES;
+    [u save];
+
+    OrgInfo *info = [[OrgInfo alloc] init];
+    info.orgId = @"00Dxx0000000009";
+    info.name = @"Acme";
+    info.instanceHost = @"acme.my.salesforce.com";
+    info.organizationType = @"Enterprise Edition";
+    info.isSandbox = YES;
+    [OrgSettings recordOrgInfo:info];
+
+    OrgSettings *r = [OrgSettings settingsForOrgId:@"00Dxx0000000009"];
+    XCTAssertEqualObjects(r.lastKnownName, @"Acme");
+    XCTAssertEqualObjects(r.lastKnownHost, @"acme.my.salesforce.com");
+    XCTAssertEqualObjects(r.detectedKindWord, @"Sandbox");
+    XCTAssertEqualObjects(r.label, @"Mine");
+    XCTAssertEqualObjects(r.colorHex, @"#D6A21E");
+    XCTAssertTrue(r.preventDelete);
+    XCTAssertTrue(r.readOnly);
+    XCTAssertTrue([[OrgSettings allOrgIds] containsObject:@"00Dxx0000000009"]);
+}
+
+-(void)testRecordOrgInfoNewOrgAndSaveKeepsFields {
+    OrgInfo *info = [[OrgInfo alloc] init];
+    info.orgId = @"00Dxx0000000008";
+    info.name = @"Dev";
+    info.instanceHost = @"dev.my.salesforce.com";
+    info.organizationType = @"Developer Edition";
+    [OrgSettings recordOrgInfo:info];
+    XCTAssertEqualObjects([OrgSettings allOrgIds], @[@"00Dxx0000000008"]);
+
+    OrgSettings *s = [OrgSettings settingsForOrgId:@"00Dxx0000000008"];
+    XCTAssertEqualObjects(s.detectedKindWord, @"Developer");
+    s.label = @"Later";
+    [s save];
+    OrgSettings *r = [OrgSettings settingsForOrgId:@"00Dxx0000000008"];
+    XCTAssertEqualObjects(r.lastKnownName, @"Dev");
+    XCTAssertEqualObjects(r.lastKnownHost, @"dev.my.salesforce.com");
+    XCTAssertEqualObjects(r.detectedKindWord, @"Developer");
+    XCTAssertEqualObjects(r.label, @"Later");
+}
+
+-(void)testRecordOrgInfoUnchangedDoesNotNotify {
+    OrgInfo *info = [[OrgInfo alloc] init];
+    info.orgId = @"00Dxx0000000007";
+    info.name = @"Acme";
+    info.instanceHost = @"acme.my.salesforce.com";
+    info.organizationType = @"Enterprise Edition";
+
+    __block NSInteger count = 0;
+    id token = [[NSNotificationCenter defaultCenter] addObserverForName:OrgSettingsDidChangeNotification
+                                                                 object:nil
+                                                                  queue:nil
+                                                             usingBlock:^(NSNotification *note) { count++; }];
+    [OrgSettings recordOrgInfo:info];
+    XCTAssertEqual(count, 1);
+    [OrgSettings recordOrgInfo:info];
+    XCTAssertEqual(count, 1);
+    info.name = @"Acme Renamed";
+    [OrgSettings recordOrgInfo:info];
+    XCTAssertEqual(count, 2);
+    [[NSNotificationCenter defaultCenter] removeObserver:token];
+    XCTAssertEqualObjects([OrgSettings settingsForOrgId:@"00Dxx0000000007"].lastKnownName, @"Acme Renamed");
+}
+
 @end

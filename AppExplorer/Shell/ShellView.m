@@ -54,6 +54,8 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
 
 @implementation ShellView {
     BOOL _inspectorVisible;
+    NSView *_workContent;
+    NSView *_inspectorColumn;
 }
 
 -(NSButton *)toolbarButtonWithTitle:(NSString *)title imageName:(NSString *)imageName {
@@ -105,6 +107,8 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
     column.translatesAutoresizingMaskIntoConstraints = NO;
     column.clipsToBounds = YES;
     [self addSubview:column];
+    _workContent = content;
+    _inspectorColumn = column;
 
     NSView *inner = [[NSView alloc] initWithFrame:NSZeroRect];
     inner.translatesAutoresizingMaskIntoConstraints = NO;
@@ -189,6 +193,24 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
         [self.inspectorWidthConstraint.animator setConstant:width];
         [self layoutSubtreeIfNeeded];
     } completionHandler:nil];
+}
+
+-(void)setPageView:(NSView *)pageView {
+    if (_pageView == pageView) return;
+    [_pageView removeFromSuperview];
+    _pageView = pageView;
+    BOOL showing = pageView != nil;
+    _workContent.hidden = showing;
+    _inspectorColumn.hidden = showing;
+    if (!showing) return;
+    pageView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:pageView positioned:NSWindowAbove relativeTo:_inspectorColumn];
+    [NSLayoutConstraint activateConstraints:@[
+        [pageView.topAnchor constraintEqualToAnchor:self.topAnchor],
+        [pageView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
+        [pageView.leadingAnchor constraintEqualToAnchor:self.rail.trailingAnchor],
+        [pageView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
+    ]];
 }
 
 -(void)drawRect:(NSRect)dirtyRect {

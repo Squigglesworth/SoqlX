@@ -47,6 +47,9 @@
 #import "Shell/ConfirmDeleteDialog.h"
 #import "SidebarFilter.h"
 #import "RecentObjects.h"
+#import "Shell/SettingsPageView.h"
+#import "SettingsController.h"
+#import "SettingsContent.h"
 
 static const CGFloat kEditorFooterHeight = 36;
 static const CGFloat kResultsFooterHeight = 52;   // was 32; 10pt more above and below the buttons
@@ -73,6 +76,10 @@ static void *kQueryChromeContext = &kQueryChromeContext;
 @property (strong) NSButton *queryMoreButton;
 @property (strong) NSButton *deleteButton;
 @property (strong) NSButton *downloadButton;
+@property (strong) SettingsPageView *settingsPage;
+@property (strong) SettingsController *settingsController;
+@property (assign) CGFloat appliedTextScale;
+@property (assign) CGFloat appliedRowHeight;
 @property (strong) EmptyStateView *resultsEmptyState;
 @property (copy) NSString *lastQueryTiming;
 @property (assign) BOOL observingDeleteTitle;
@@ -799,11 +806,54 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [self updateOrgChip];
     [self installQueryChrome];
     [self installSidebarChrome];
+    [self installVersionLink];
 
     __weak Explorer *weakSelf = self;
     apexController.executionBlockedReason = ^NSString *{
         return weakSelf.writesAllowed ? nil : @"This org is read-only in Settings, so anonymous Apex can't run against it.";
     };
+}
+
+// MARK:- Status band version link
+
+- (void)installVersionLink {
+    // The nib's status controls live in the re-parented content view; find the API count text and
+    // the meter there and slide them left to make room on the right.
+    NSView *band = nil;
+    NSTextField *apiText = nil;
+    NSLevelIndicator *meter = nil;
+    for (NSView *v in self.shell.subviews) {
+        for (NSView *sub in v.subviews) {
+            if ([sub isKindOfClass:[NSLevelIndicator class]]) { meter = (NSLevelIndicator *)sub; band = v; }
+            if ([sub isKindOfClass:[NSTextField class]]) {
+                NSDictionary *b = [sub infoForBinding:NSValueBinding];
+                if ([b[NSObservedKeyPathKey] isEqualToString:@"apiCallCountText"]) apiText = (NSTextField *)sub;
+            }
+        }
+    }
+    if (band == nil) return;
+
+    NSButton *link = [NSButton buttonWithTitle:[SettingsContent footerTitle] target:self action:@selector(showReleaseNotes:)];
+    link.bordered = NO;
+    link.attributedTitle = [[NSAttributedString alloc] initWithString:[SettingsContent footerTitle] attributes:@{
+        NSFontAttributeName: [SXTokens caption],
+        NSForegroundColorAttributeName: [SXTokens link],
+        NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) }];
+    link.toolTip = @"Release notes and what's new, in Settings";
+    [link sizeToFit];
+    NSSize sz = link.frame.size;
+    const CGFloat bandHeight = 28;
+    link.frame = NSMakeRect(NSWidth(band.bounds) - SXSpace2 - sz.width, floor((bandHeight - sz.height) / 2), sz.width, sz.height);
+    link.autoresizingMask = NSViewMinXMargin | NSViewMaxYMargin;
+    [band addSubview:link];
+
+    CGFloat shift = sz.width + SXSpace3;
+    for (NSView *v in @[apiText ?: (id)[NSNull null], meter ?: (id)[NSNull null]]) {
+        if (![v isKindOfClass:[NSView class]]) continue;
+        NSRect f = v.frame;
+        f.origin.x -= shift;
+        v.frame = f;
+    }
 }
 
 // MARK:- Sidebar chrome (filter field, filter menu)
@@ -886,12 +936,27 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
         [split setPosition:SXSidebarWidth ofDividerAtIndex:0];
     }
     [self updateSidebarFilterButton];
+    [self applyDisplaySettings];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sidebarDefaultsChanged:)
                                                  name:NSUserDefaultsDidChangeNotification object:nil];
 }
 
 -(void)sidebarDefaultsChanged:(NSNotification *)n {
     [self updateSidebarFilterButton];
+    [self applyDisplaySettings];
+}
+
+// Settings, Appearance: density and text size. Only acts when one of them actually changed,
+// since every defaults write (the query text is saved on each run) lands here.
+-(void)applyDisplaySettings {
+    CGFloat scale = [SXTokens textScale];
+    CGFloat row = [SXTokens rowHeight];
+    if (scale == self.appliedTextScale && row == self.appliedRowHeight) return;
+    self.appliedTextScale = scale;
+    self.appliedRowHeight = row;
+    [self.rootResults applyDisplaySettings];
+    [self.childResults applyDisplaySettings];
+    [detailsController applyTextScale];
 }
 
 -(SidebarFilter *)currentSidebarFilter {
@@ -1114,16 +1179,45 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
 
 - (void)selectViewFromRail:(id)sender {
     NSInteger tag = self.shell.rail.selectedTag;
+    if (tag == 3) {
+        [self showSettingsSection:nil];
+        return;
+    }
+    [self hideSettings];
     switch (tag) {
         case 1: [soqlSchemaTabs selectTabViewItemWithIdentifier:schemaTabId]; break;
         case 2: [soqlSchemaTabs selectTabViewItemWithIdentifier:apexTabId]; break;
-        case 3:
-            // Settings isn't a view yet; open Preferences and leave the rail on the current view.
-            [NSApp sendAction:@selector(showPreferences:) to:nil from:self];
-            self.shell.rail.selectedTag = [self railTagForTabIdentifier:soqlSchemaTabs.selectedTabViewItem.identifier];
-            break;
         default: [soqlSchemaTabs selectTabViewItemWithIdentifier:soqlTabId]; break;
     }
+}
+
+// MARK:- Settings page
+
+- (void)showSettingsSection:(NSString *)identifier {
+    if (self.shell == nil) return;
+    if (self.settingsPage == nil) {
+        self.settingsPage = [[SettingsPageView alloc] initWithFrame:self.shell.bounds];
+        self.settingsController = [[SettingsController alloc] initWithPage:self.settingsPage];
+    }
+    [self.settingsController refreshConnections];
+    self.shell.pageView = self.settingsPage;
+    self.shell.rail.selectedTag = 3;
+    if (identifier.length > 0) {
+        // Let the page lay out once so section positions are known before scrolling.
+        [self.settingsPage layoutSubtreeIfNeeded];
+        [self.settingsPage scrollToSection:identifier];
+    }
+}
+
+- (void)hideSettings {
+    if (self.shell.pageView == nil) return;
+    [myWindow makeFirstResponder:nil];   // commits a text field being edited in Settings
+    self.shell.pageView = nil;
+    self.shell.rail.selectedTag = [self railTagForTabIdentifier:soqlSchemaTabs.selectedTabViewItem.identifier];
+}
+
+- (void)showReleaseNotes:(id)sender {
+    [self showSettingsSection:SettingsSectionReleaseNotes];
 }
 
 // Single clicks on the results tables go to the wrapper for ⌘-click record links; double clicks
@@ -1178,6 +1272,7 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
         info.isSandbox = [o boolValue:@"IsSandbox"];
         info.trialExpiration = [o dateTimeValue:@"TrialExpirationDate"];
         info.instanceHost = self.sforce.serverUrl.host;
+        [OrgSettings recordOrgInfo:info];   // lists the org under Settings, Connections
         self.orgInfo = info;
         [self updateOrgChip];
         self->descDataSource.orgId = info.orgId;
@@ -1508,6 +1603,7 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
     }
     self.selectedTabViewIdentifier = item.identifier;
     if (self.shell != nil) {
+        [self hideSettings];
         self.shell.rail.selectedTag = [self railTagForTabIdentifier:item.identifier];
     }
 }
