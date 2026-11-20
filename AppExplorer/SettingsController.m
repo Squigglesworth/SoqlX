@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 #import "SettingsController.h"
+#import <Sparkle/Sparkle.h>
 #import "Shell/SettingsPageView.h"
 #import "SettingsContent.h"
 #import "OrgSettings.h"
@@ -37,7 +38,6 @@ NSString *const SettingsSectionReleaseNotes = @"release-notes";
 NSString *const SettingsSectionAbout = @"about";
 
 static NSString *const kConsumerKeyDefault = @"OAuthConsumerKey";
-static NSString *const kCheckAtStartupDefault = @"SUCheckAtStartup";
 
 // Target for a control: runs a block. Owned by SettingsController.
 @interface SettingsAction : NSObject
@@ -57,6 +57,9 @@ static NSString *const kCheckAtStartupDefault = @"SUCheckAtStartup";
 @property (weak) SettingsPageView *page;
 @property (strong) NSMutableArray<SettingsAction *> *actions;      // static controls
 @property (strong) NSMutableArray<SettingsAction *> *orgActions;   // rebuilt with Connections
+@property (strong) NSSegmentedControl *themeControl;
+@property (strong) NSSegmentedControl *densityControl;
+@property (strong) NSPopUpButton *textSizeControl;
 @end
 
 @implementation SettingsController
@@ -96,6 +99,13 @@ static NSString *const kCheckAtStartupDefault = @"SUCheckAtStartup";
    toObject:[NSUserDefaultsController sharedUserDefaultsController]
 withKeyPath:[@"values." stringByAppendingString:key]
     options:nil];
+    return b;
+}
+
+// Sparkle keeps this setting itself; the old Preferences key (SUCheckAtStartup) was never read.
+-(NSButton *)updatesCheckbox {
+    NSButton *b = [SXControls checkboxWithTitle:@"" target:nil action:nil];
+    [b bind:NSValueBinding toObject:[SUUpdater sharedUpdater] withKeyPath:@"automaticallyChecksForUpdates" options:nil];
     return b;
 }
 
@@ -192,7 +202,7 @@ withKeyPath:[@"values." stringByAppendingString:key]
     }];
     [page addRowInSection:s title:@"Theme"
                      text:@"Choose whether SoqlX follows the system appearance or always uses light or dark."
-                  control:[self segmentedWithLabels:@[@"System", @"Light", @"Dark"] selected:themeIdx action:themeAction]];
+                  control:(self.themeControl = [self segmentedWithLabels:@[@"System", @"Light", @"Dark"] selected:themeIdx action:themeAction])];
 
     // Density
     NSString *density = [ud stringForKey:PREF_DENSITY];
@@ -203,7 +213,7 @@ withKeyPath:[@"values." stringByAppendingString:key]
     }];
     [page addRowInSection:s title:@"Density"
                      text:@"Sets how much space rows in the results and the sidebar take."
-                  control:[self segmentedWithLabels:@[@"Compact", @"Comfortable"] selected:densityIdx action:densityAction]];
+                  control:(self.densityControl = [self segmentedWithLabels:@[@"Compact", @"Comfortable"] selected:densityIdx action:densityAction])];
 
     // Text size
     static const double scales[] = {0.9, 1.0, 1.15, 1.3};
@@ -225,7 +235,7 @@ withKeyPath:[@"values." stringByAppendingString:key]
     }];
     [page addRowInSection:s title:@"Text size"
                      text:@"Scales the text in the results, the sidebar and the details panel."
-                  control:[self popupWithTitles:@[@"Small", @"Default", @"Large", @"Larger"] selected:scaleIdx action:scaleAction]];
+                  control:(self.textSizeControl = [self popupWithTitles:@[@"Small", @"Default", @"Large", @"Larger"] selected:scaleIdx action:scaleAction])];
 
     // Editor font
     AppDelegate *delegate = (AppDelegate *)NSApp.delegate;
@@ -313,10 +323,10 @@ withKeyPath:[@"values." stringByAppendingString:key]
     NSString *s = SettingsSectionSafety;
     [page addSection:s title:@"Safety"];
     [page addRowInSection:s title:@"Typed confirmation in Production"
-                     text:@"Deleting from a Production org always asks you to type the object name first."
+                     text:@"Deleting from a Production org asks you to type DELETE and the number of records first."
                   control:[SettingsPageView badgeWithText:@"Always on"]];
     [page addRowInSection:s title:@"Trial orgs count as Production"
-                     text:@"Trial orgs get the same protection as Production orgs."
+                     text:@"Trial orgs get the same delete protection as Production orgs, including the typed confirmation."
                   control:[SettingsPageView badgeWithText:@"Always on"]];
     [page addRowInSection:s title:@"Ask before every delete"
                      text:@"Asks for confirmation before any delete, in every org, not only in Production."
@@ -339,11 +349,27 @@ withKeyPath:[@"values." stringByAppendingString:key]
 
 // MARK: - Connections
 
+-(void)syncAppearanceControls {
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSString *theme = [ud stringForKey:PREF_APPEARANCE];
+    self.themeControl.selectedSegment = [theme isEqualToString:@"light"] ? 1 : [theme isEqualToString:@"dark"] ? 2 : 0;
+    self.densityControl.selectedSegment = [[ud stringForKey:PREF_DENSITY] isEqualToString:@"comfortable"] ? 1 : 0;
+    static const double scales[] = {0.9, 1.0, 1.15, 1.3};
+    double current = [ud objectForKey:PREF_TEXT_SCALE] != nil ? [ud doubleForKey:PREF_TEXT_SCALE] : 1.0;
+    NSInteger idx = 1;
+    for (NSInteger i = 0; i < 4; i++) {
+        if (fabs(scales[i] - current) < 0.001) idx = i;
+    }
+    [self.textSizeControl selectItemAtIndex:idx];
+}
+
 -(void)refreshConnections {
     SettingsPageView *page = self.page;
     if (!page) {
         return;
     }
+    // Commit a label or consumer key being typed before its field is rebuilt.
+    [page.window makeFirstResponder:nil];
     NSString *s = SettingsSectionConnections;
     [page removeContentOfSection:s];
     [self.orgActions removeAllObjects];
@@ -567,7 +593,7 @@ withKeyPath:[@"values." stringByAppendingString:key]
 
     [page addRowInSection:s title:@"Check for updates at startup"
                      text:@"Looks for a newer version of SoqlX each time the app starts."
-                  control:[self checkboxBoundTo:kCheckAtStartupDefault]];
+                  control:[self updatesCheckbox]];
     [page addRowInSection:s title:@"Quit when the last window closes"
                      text:@"Quits SoqlX when you close its last window instead of leaving it running."
                   control:[self checkboxBoundTo:PREF_QUIT_ON_LAST_WINDOW_CLOSE]];

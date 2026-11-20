@@ -180,7 +180,8 @@ static SXWrapLabel *SXMakeWrapLabel(NSString *string, NSFont *font, NSColor *col
     l.textColor = color;
     l.stringValue = string ?: @"";
     [l setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow forOrientation:NSLayoutConstraintOrientationHorizontal];
-    [l setContentHuggingPriority:NSLayoutPriorityDefaultLow forOrientation:NSLayoutConstraintOrientationHorizontal];
+    // Lowest hugging in the row, so the label takes the spare width and badges and buttons keep their size.
+    [l setContentHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
     return l;
 }
 
@@ -318,7 +319,6 @@ static void SXAddFullWidth(NSStackView *stack, NSView *view) {
         [_column.topAnchor constraintEqualToAnchor:_docView.topAnchor constant:SXSpace5],
         [_column.bottomAnchor constraintEqualToAnchor:_docView.bottomAnchor constant:-SXSpace6],
         [_column.widthAnchor constraintLessThanOrEqualToConstant:kColumnMaxWidth],
-        [_column.trailingAnchor constraintLessThanOrEqualToAnchor:_docView.trailingAnchor constant:-SXSpace6],
         preferred,
     ]];
 }
@@ -426,6 +426,10 @@ static void SXAddFullWidth(NSStackView *stack, NSView *view) {
     if (control) {
         control.translatesAutoresizingMaskIntoConstraints = NO;
         [control setContentHuggingPriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationHorizontal];
+        if ([control isKindOfClass:[NSStackView class]]) {
+            // Stack views ignore content hugging; this keeps grouped controls together.
+            [(NSStackView *)control setHuggingPriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationHorizontal];
+        }
         [control setContentCompressionResistancePriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationHorizontal];
         [row addSubview:control];
         [NSLayoutConstraint activateConstraints:@[

@@ -172,6 +172,7 @@ SXOrgKind SXOrgKindFromWord(NSString *word, BOOL *ok) {
     if (all[orgId] == nil) return;
     [all removeObjectForKey:orgId];
     [OrgSettingsDefaults() setObject:all forKey:kOrgSettingsKey];
+    [[NSNotificationCenter defaultCenter] postNotificationName:OrgSettingsDidChangeNotification object:nil];
 }
 
 +(NSArray<NSString*>*)allOrgIds {

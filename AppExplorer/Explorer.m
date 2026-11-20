@@ -583,6 +583,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 }
 
 - (IBAction)insertSnippet:(id)sender {
+    [self hideSettings];   // these act on the editors, which Settings covers
     SoqlSnippet *snippet = nil;
     if ([sender respondsToSelector:@selector(representedObject)]) {
         snippet = [sender representedObject];
@@ -684,6 +685,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
 }
 
 - (IBAction)executeQuery:(id)sender {
+    [self hideSettings];   // these act on the editors, which Settings covers
     // Run honours the "Include deleted and archived" checkbox; the menu's Query All always does.
     [self permformQuery:self.includeDeleted];
 }
@@ -848,6 +850,16 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     [band addSubview:link];
 
     CGFloat shift = sz.width + SXSpace3;
+    // The status message keeps clear of the meter, which moves left with the API count.
+    for (NSView *sub in band.subviews) {
+        if (![sub isKindOfClass:[NSTextField class]]) continue;
+        NSDictionary *b = [sub infoForBinding:NSValueBinding];
+        if ([b[NSObservedKeyPathKey] isEqualToString:@"statusText"]) {
+            NSRect f = sub.frame;
+            f.size.width = MAX(80, f.size.width - shift);
+            sub.frame = f;
+        }
+    }
     for (NSView *v in @[apiText ?: (id)[NSNull null], meter ?: (id)[NSNull null]]) {
         if (![v isKindOfClass:[NSView class]]) continue;
         NSRect f = v.frame;
@@ -1200,12 +1212,17 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
         self.settingsController = [[SettingsController alloc] initWithPage:self.settingsPage];
     }
     [self.settingsController refreshConnections];
+    [self.settingsController syncAppearanceControls];
     self.shell.pageView = self.settingsPage;
     self.shell.rail.selectedTag = 3;
     if (identifier.length > 0) {
-        // Let the page lay out once so section positions are known before scrolling.
+        // Wrapping labels settle their heights over a couple of layout passes, so scroll after them.
         [self.settingsPage layoutSubtreeIfNeeded];
-        [self.settingsPage scrollToSection:identifier];
+        SettingsPageView *page = self.settingsPage;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [page layoutSubtreeIfNeeded];
+            [page scrollToSection:identifier];
+        });
     }
 }
 
@@ -1302,6 +1319,7 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
 // MARK:- File load/save
 
 -(NSError *)loadQuery:(NSURL *)url {
+    [self hideSettings];   // these act on the editors, which Settings covers
     NSError *err = nil;
     NSString *soql = [[NSString alloc] initWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&err];
     if (err != nil) {
@@ -1316,6 +1334,7 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
 }
 
 -(NSError *)loadApex:(NSURL *)url {
+    [self hideSettings];   // these act on the editors, which Settings covers
     NSError *err = nil;
     NSString *apex = [[NSString alloc] initWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&err];
     if (err != nil) {

@@ -86,7 +86,8 @@ static const void *kDelegateKey = &kDelegateKey;
 
     ConfirmDeleteFieldDelegate *fieldDelegate = nil;
     NSTextField *field = nil;
-    if (kind == SXOrgKindProduction) {
+    // Trial orgs count as Production for the safety rules (Settings, Safety).
+    if (kind == SXOrgKindProduction || kind == SXOrgKindTrial) {
         field = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 240, 24)];
         field.font = [SXTokens data];
         field.placeholderString = [NSString stringWithFormat:@"Type %@ to confirm", [self phraseForCount:count]];

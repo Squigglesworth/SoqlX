@@ -40,6 +40,8 @@ extern NSString *const SettingsSectionAbout;
 -(instancetype)initWithPage:(SettingsPageView *)page;
 // Rebuilds the Connections section from OrgSettings; called each time Settings opens.
 -(void)refreshConnections;
+// Re-reads Theme, Density and Text size, which can change from the View menu or another window.
+-(void)syncAppearanceControls;
 
 @end
 
