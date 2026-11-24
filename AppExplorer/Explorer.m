@@ -48,6 +48,7 @@
 #import "SidebarFilter.h"
 #import "RecentObjects.h"
 #import "Shell/SettingsPageView.h"
+#import "Shell/ApiMeterView.h"
 #import "SettingsController.h"
 #import "SettingsContent.h"
 
@@ -77,6 +78,7 @@ static void *kQueryChromeContext = &kQueryChromeContext;
 @property (strong) NSButton *deleteButton;
 @property (strong) NSButton *downloadButton;
 @property (strong) SettingsPageView *settingsPage;
+@property (strong) ApiMeterView *apiMeterView;
 @property (strong) SettingsController *settingsController;
 @property (assign) CGFloat appliedTextScale;
 @property (assign) CGFloat appliedRowHeight;
@@ -798,6 +800,8 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     rail.action = @selector(selectViewFromRail:);
     rail.selectedTag = [self railTagForTabIdentifier:soqlSchemaTabs.selectedTabViewItem.identifier];
 
+    shell.orgChip.target = self;
+    shell.orgChip.action = @selector(showOrgSettings:);
     shell.recentToggle.target = self;
     shell.recentToggle.action = @selector(toggleRecentPanel:);
     shell.detailsToggle.target = self;
@@ -835,6 +839,16 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
     }
     if (band == nil) return;
 
+    // A read-only meter in the design's colours replaces the nib's level indicator, which could be
+    // dragged (changing the value and its colour) and showed nothing at low usage.
+    ApiMeterView *apiMeter = [[ApiMeterView alloc] initWithFrame:meter.frame];
+    apiMeter.autoresizingMask = meter.autoresizingMask;
+    [apiMeter bind:@"fraction" toObject:self withKeyPath:@"apiCallsFraction" options:nil];
+    [band addSubview:apiMeter];
+    [meter unbind:NSValueBinding];
+    meter.hidden = YES;
+    self.apiMeterView = apiMeter;
+
     NSButton *link = [NSButton buttonWithTitle:[SettingsContent footerTitle] target:self action:@selector(showReleaseNotes:)];
     link.bordered = NO;
     link.attributedTitle = [[NSAttributedString alloc] initWithString:[SettingsContent footerTitle] attributes:@{
@@ -860,7 +874,7 @@ static NSString *KEYPATH_WINDOW_VISIBLE = @"windowVisible";
             sub.frame = f;
         }
     }
-    for (NSView *v in @[apiText ?: (id)[NSNull null], meter ?: (id)[NSNull null]]) {
+    for (NSView *v in @[apiText ?: (id)[NSNull null], apiMeter]) {
         if (![v isKindOfClass:[NSView class]]) continue;
         NSRect f = v.frame;
         f.origin.x -= shift;
@@ -1176,6 +1190,7 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
         return nil;
     }
     NSToolbarItem *item = [[NSToolbarItem alloc] initWithItemIdentifier:identifier];
+    item.bordered = NO;   // the views draw themselves; no system platter behind them
     item.view = view;
     item.label = label;
     item.paletteLabel = label;
@@ -1231,6 +1246,10 @@ static NSString *const ShellItemOrgChip = @"sx.orgchip";
     [myWindow makeFirstResponder:nil];   // commits a text field being edited in Settings
     self.shell.pageView = nil;
     self.shell.rail.selectedTag = [self railTagForTabIdentifier:soqlSchemaTabs.selectedTabViewItem.identifier];
+}
+
+- (void)showOrgSettings:(id)sender {
+    [self showSettingsSection:SettingsSectionConnections];
 }
 
 - (void)showReleaseNotes:(id)sender {

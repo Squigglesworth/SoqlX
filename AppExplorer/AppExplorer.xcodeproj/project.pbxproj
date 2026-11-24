@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A1B2C3D4E5F6000000000A03 /* RotatingOAuthInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000A02 /* RotatingOAuthInfo.m */; };
 		A1B2C3D4E5F6000000000082 /* SXControls.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000081 /* SXControls.m */; };
+		A1B2C3D4E5F6000000000E30 /* ApiMeterView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E2F /* ApiMeterView.m */; };
 		A1B2C3D4E5F6000000000E2D /* DesignTokensTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E2C /* DesignTokensTests.m */; };
 		A1B2C3D4E5F6000000000E22 /* SettingsPageView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E21 /* SettingsPageView.m */; };
 		A1B2C3D4E5F6000000000E25 /* SettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000E24 /* SettingsController.m */; };
@@ -301,6 +302,8 @@
 		A1B2C3D4E5F6000000000A02 /* RotatingOAuthInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RotatingOAuthInfo.m; path = ../common/RotatingOAuthInfo.m; sourceTree = SOURCE_ROOT; };
 		A1B2C3D4E5F6000000000080 /* SXControls.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SXControls.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000081 /* SXControls.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SXControls.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E2E /* ApiMeterView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ApiMeterView.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000E2F /* ApiMeterView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ApiMeterView.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000E2C /* DesignTokensTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DesignTokensTests.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000E20 /* SettingsPageView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SettingsPageView.h; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000000E21 /* SettingsPageView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SettingsPageView.m; sourceTree = "<group>"; };
@@ -593,6 +596,8 @@
 				A1B2C3D4E5F6000000000D68 /* ShellView.m */,
 				A1B2C3D4E5F6000000000080 /* SXControls.h */,
 				A1B2C3D4E5F6000000000081 /* SXControls.m */,
+				A1B2C3D4E5F6000000000E2E /* ApiMeterView.h */,
+				A1B2C3D4E5F6000000000E2F /* ApiMeterView.m */,
 				A1B2C3D4E5F6000000000E20 /* SettingsPageView.h */,
 				A1B2C3D4E5F6000000000E21 /* SettingsPageView.m */,
 				A1B2C3D4E5F6000000000084 /* EmptyStateView.h */,
@@ -1355,6 +1360,7 @@
 				A1B2C3D4E5F6000000000D66 /* OrgChipView.m in Sources */,
 				A1B2C3D4E5F6000000000D69 /* ShellView.m in Sources */,
 				A1B2C3D4E5F6000000000082 /* SXControls.m in Sources */,
+				A1B2C3D4E5F6000000000E30 /* ApiMeterView.m in Sources */,
 				A1B2C3D4E5F6000000000E22 /* SettingsPageView.m in Sources */,
 				A1B2C3D4E5F6000000000E25 /* SettingsController.m in Sources */,
 				A1B2C3D4E5F6000000000E28 /* SettingsContent.m in Sources */,

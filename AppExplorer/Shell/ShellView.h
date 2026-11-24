@@ -47,6 +47,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly, strong) NSTextField *inspectorTitle;
 @property (assign, nonatomic) BOOL inspectorVisible;
 -(void)setInspectorVisible:(BOOL)visible animated:(BOOL)animated;
+// Width of the inspector when shown; dragging its left edge changes it, and it is remembered.
+@property (assign, nonatomic) CGFloat inspectorWidth;
 
 // A full page (Settings) that covers everything right of the rail. nil shows the work area again.
 @property (strong, nonatomic, nullable) NSView *pageView;

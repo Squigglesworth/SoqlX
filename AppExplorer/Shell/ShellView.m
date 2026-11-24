@@ -25,6 +25,36 @@
 static const CGFloat kRailWidth = 64.0;
 static const CGFloat kInspectorHeaderHeight = 28.0;
 static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom status strip
+static NSString *const kInspectorWidthDefault = @"InspectorWidth";
+static const CGFloat kInspectorMinWidth = 260.0;
+static const CGFloat kInspectorMaxWidth = 800.0;
+static const CGFloat kWorkAreaMinWidth = 420.0;
+
+// A thin strip over the inspector's left edge that resizes it.
+@interface ShellInspectorResizeHandle : NSView
+@property (copy) void (^onDrag)(CGFloat deltaX);   // positive when dragged left (wider)
+@property (copy) void (^onEnd)(void);
+@end
+
+@implementation ShellInspectorResizeHandle {
+    CGFloat _lastX;
+}
+-(void)resetCursorRects {
+    [self addCursorRect:self.bounds cursor:[NSCursor resizeLeftRightCursor]];
+}
+-(BOOL)mouseDownCanMoveWindow { return NO; }
+-(void)mouseDown:(NSEvent *)event {
+    _lastX = event.locationInWindow.x;
+}
+-(void)mouseDragged:(NSEvent *)event {
+    CGFloat x = event.locationInWindow.x;
+    if (self.onDrag) self.onDrag(_lastX - x);
+    _lastX = x;
+}
+-(void)mouseUp:(NSEvent *)event {
+    if (self.onEnd) self.onEnd();
+}
+@end
 
 // The inspector column: surface fill with a hairline on its left edge.
 @interface ShellInspectorColumnView : NSView
@@ -50,6 +80,8 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
 @property (strong) NSView *inspectorContainer;
 @property (strong) NSTextField *inspectorTitle;
 @property (strong) NSLayoutConstraint *inspectorWidthConstraint;
+@property (strong) NSLayoutConstraint *innerWidthConstraint;
+@property (strong) ShellInspectorResizeHandle *inspectorHandle;
 @end
 
 @implementation ShellView {
@@ -131,6 +163,9 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
     [inner addSubview:_inspectorContainer];
 
     _inspectorWidthConstraint = [column.widthAnchor constraintEqualToConstant:0];
+    double saved = [[NSUserDefaults standardUserDefaults] doubleForKey:kInspectorWidthDefault];
+    _inspectorWidth = saved >= kInspectorMinWidth ? MIN(saved, kInspectorMaxWidth) : SXInspectorWidth;
+    _innerWidthConstraint = [inner.widthAnchor constraintEqualToConstant:_inspectorWidth];
 
     [NSLayoutConstraint activateConstraints:@[
         // Rail down the left edge.
@@ -154,7 +189,7 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
         [inner.topAnchor constraintEqualToAnchor:column.topAnchor],
         [inner.bottomAnchor constraintEqualToAnchor:column.bottomAnchor],
         [inner.trailingAnchor constraintEqualToAnchor:column.trailingAnchor],
-        [inner.widthAnchor constraintEqualToConstant:SXInspectorWidth],
+        self.innerWidthConstraint,
 
         [header.topAnchor constraintEqualToAnchor:inner.topAnchor],
         [header.leadingAnchor constraintEqualToAnchor:inner.leadingAnchor],
@@ -171,7 +206,35 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
         [_inspectorContainer.bottomAnchor constraintEqualToAnchor:inner.bottomAnchor],
     ]];
 
+    ShellInspectorResizeHandle *handle = [[ShellInspectorResizeHandle alloc] initWithFrame:NSZeroRect];
+    handle.translatesAutoresizingMaskIntoConstraints = NO;
+    handle.hidden = YES;
+    [self addSubview:handle positioned:NSWindowAbove relativeTo:column];
+    [NSLayoutConstraint activateConstraints:@[
+        [handle.centerXAnchor constraintEqualToAnchor:column.leadingAnchor],
+        [handle.widthAnchor constraintEqualToConstant:8],
+        [handle.topAnchor constraintEqualToAnchor:column.topAnchor],
+        [handle.bottomAnchor constraintEqualToAnchor:column.bottomAnchor constant:-kStatusBarHeight],
+    ]];
+    __weak ShellView *weakSelf = self;
+    handle.onDrag = ^(CGFloat dx) {
+        ShellView *me = weakSelf;
+        [me setInspectorWidth:me.inspectorWidth + dx];
+    };
+    handle.onEnd = ^{
+        [[NSUserDefaults standardUserDefaults] setDouble:weakSelf.inspectorWidth forKey:kInspectorWidthDefault];
+    };
+    _inspectorHandle = handle;
     return self;
+}
+
+-(void)setInspectorWidth:(CGFloat)width {
+    // Keep room for the work area beside the rail.
+    CGFloat roomLeft = NSWidth(self.bounds) - 64.0 - kWorkAreaMinWidth;
+    CGFloat maxW = MAX(kInspectorMinWidth, MIN(kInspectorMaxWidth, roomLeft));
+    _inspectorWidth = MIN(maxW, MAX(kInspectorMinWidth, width));
+    self.innerWidthConstraint.constant = _inspectorWidth;
+    if (_inspectorVisible) self.inspectorWidthConstraint.constant = _inspectorWidth;
 }
 
 -(BOOL)inspectorVisible { return _inspectorVisible; }
@@ -182,7 +245,8 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
 
 -(void)setInspectorVisible:(BOOL)visible animated:(BOOL)animated {
     _inspectorVisible = visible;
-    CGFloat width = visible ? SXInspectorWidth : 0.0;
+    self.inspectorHandle.hidden = !visible || self.pageView != nil;
+    CGFloat width = visible ? self.inspectorWidth : 0.0;
     if (!animated || self.window == nil) {
         self.inspectorWidthConstraint.constant = width;
         return;
@@ -202,6 +266,7 @@ static const CGFloat kStatusBarHeight = 28.0;   // matches the nib's bottom stat
     BOOL showing = pageView != nil;
     _workContent.hidden = showing;
     _inspectorColumn.hidden = showing;
+    self.inspectorHandle.hidden = showing || !_inspectorVisible;
     if (!showing) return;
     pageView.translatesAutoresizingMaskIntoConstraints = NO;
     [self addSubview:pageView positioned:NSWindowAbove relativeTo:_inspectorColumn];

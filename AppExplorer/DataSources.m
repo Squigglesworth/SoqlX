@@ -154,6 +154,39 @@
     [self initializeWithTheme:t];
 }
 
++(ZKDescribeIcon *)flatIconFor:(ZKDescribeThemeItem *)item {
+    // The 60px PNG gives a sharp glyph at 16pt on Retina; take the closest PNG otherwise.
+    ZKDescribeIcon *best = nil;
+    for (ZKDescribeIcon *i in item.icons) {
+        if (![i.theme isEqualToString:@"theme4"] || ![i.contentType hasPrefix:@"image/png"]) continue;
+        if (best == nil || labs(i.height - 60) < labs(best.height - 60)) best = i;
+    }
+    return best;
+}
+
++(NSColor *)primaryColorFor:(ZKDescribeThemeItem *)item {
+    for (ZKDescribeColor *c in item.colors) {
+        if (![c.theme isEqualToString:@"theme4"] || ![c.context isEqualToString:@"primary"]) continue;
+        unsigned int rgb = 0;
+        NSString *hex = [c.color stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"# "]];
+        if (hex.length == 6 && [[NSScanner scannerWithString:hex] scanHexInt:&rgb]) {
+            return [NSColor colorWithSRGBRed:((rgb >> 16) & 0xFF) / 255.0 green:((rgb >> 8) & 0xFF) / 255.0
+                                        blue:(rgb & 0xFF) / 255.0 alpha:1.0];
+        }
+    }
+    return [NSColor colorWithSRGBRed:0.45 green:0.47 blue:0.50 alpha:1.0];
+}
+
+// A 16pt rounded tile in the object's colour with the glyph inset on top, drawn at screen scale.
++(NSImage *)tile:(NSImage *)glyph on:(NSColor *)color {
+    return [NSImage imageWithSize:NSMakeSize(16, 16) flipped:NO drawingHandler:^BOOL(NSRect r) {
+        [color setFill];
+        [[NSBezierPath bezierPathWithRoundedRect:r xRadius:3 yRadius:3] fill];
+        [glyph drawInRect:NSInsetRect(r, 2, 2) fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0];
+        return YES;
+    }];
+}
+
 - (void)initializeWithTheme:(ZKDescribeGlobalTheme*)t {
     types = t.global.sobjects;
     describes = [[NSMutableDictionary alloc] init];
@@ -169,14 +202,24 @@
     
     NSString *sid = sforce.sessionId;
     for (ZKDescribeThemeItem *r in t.theme.themeItems) {
-        ZKDescribeIcon *i = [r iconWithHeight:16 theme:@"theme3"];
-        [i fetchIconUsingSessionId:sid whenCompleteDo:^(NSImage *img) {
-            NSString *tn = r.name.lowercaseString;
+        NSString *tn = r.name.lowercaseString;
+        void (^store)(NSImage *) = ^(NSImage *img) {
             self->icons[tn] = img;
             [self->outlineView reloadItem:byname[tn]];
             SidebarRecentItem *recent = self.recentItemCache[tn];
             if (recent != nil) [self->outlineView reloadItem:recent];
-        }];
+        };
+        // Lightning (theme4) icons are flat: a white glyph that sits on the object's colour.
+        // Older orgs without them fall back to the Classic (theme3) icons.
+        ZKDescribeIcon *flat = [DescribeListDataSource flatIconFor:r];
+        if (flat != nil) {
+            NSColor *bg = [DescribeListDataSource primaryColorFor:r];
+            [flat fetchIconUsingSessionId:sid whenCompleteDo:^(NSImage *glyph) {
+                store([DescribeListDataSource tile:glyph on:bg]);
+            }];
+        } else {
+            [[r iconWithHeight:16 theme:@"theme3"] fetchIconUsingSessionId:sid whenCompleteDo:store];
+        }
     }
     [self.describer describe:t withClient:sforce andDelegate:self];
     [self updateFilter];

@@ -13,8 +13,16 @@ if [ ! -d AppExplorer.xcworkspace ]; then
     exit 1
 fi
 
-xcodebuild -workspace AppExplorer.xcworkspace -scheme SoqlXplorer -configuration Debug build \
-    CODE_SIGN_IDENTITY=- MACOSX_DEPLOYMENT_TARGET=12.0 2>&1 | grep -E "error:|BUILD" || true
+LOG="$(mktemp -t soqlx-build)"
+if ! xcodebuild -workspace AppExplorer.xcworkspace -scheme SoqlXplorer -configuration Debug build \
+    CODE_SIGN_IDENTITY=- MACOSX_DEPLOYMENT_TARGET=12.0 >"$LOG" 2>&1; then
+    # Stop here: launching would open the previous build and hide the failure.
+    grep -E "error:" "$LOG" | sort -u >&2 || true
+    echo "BUILD FAILED. Full log: $LOG" >&2
+    exit 1
+fi
+grep -E "warning:.*(Settings|Sidebar|Shell/)" "$LOG" | sort -u | head -20 || true
+echo "BUILD SUCCEEDED"
 
 APP="$(scripts/resign-debug.sh)"
 open "$APP"

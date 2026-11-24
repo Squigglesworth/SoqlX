@@ -88,6 +88,11 @@ static const void *kBaseFontKey = &kBaseFontKey;
         [sv.topAnchor constraintEqualToAnchor:container.topAnchor],
         [sv.bottomAnchor constraintEqualToAnchor:container.bottomAnchor],
     ]];
+    // Values take whatever width the inspector has (it can be dragged wider); anything still
+    // cut off shows in full on hover.
+    detailsTable.columnAutoresizingStyle = NSTableViewLastColumnOnlyAutoresizingStyle;
+    detailsTable.allowsExpansionToolTips = YES;
+    [detailsTable sizeLastColumnToFit];
     self.inspectorHost = shell;
     shell.inspectorTitle.stringValue = self.title ?: @"";
     [shell setInspectorVisible:self.windowVisible animated:NO];
