@@ -532,9 +532,9 @@ withKeyPath:[@"values." stringByAppendingString:key]
                   control:readOnlyBox];
 
     // Forget
-    __weak typeof(self) weakSelf = self;
+    __weak SettingsController *weakSelf = self;
     SettingsAction *forgetAction = [self actionIn:self.orgActions block:^(id sender) {
-        typeof(self) strongSelf = weakSelf;
+        SettingsController *strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
